@@ -1,0 +1,125 @@
+"use client";
+
+import { Info, Wallet } from "lucide-react";
+import { Button } from "@repo/ui/button";
+import type { InvoiceType } from "@/features/invoice/types";
+import { CopyField } from "@/features/payments/components/CopyField";
+import { ExplorerLink } from "@/features/payments/components/ExplorerLink";
+import { PaymentQr } from "@/features/payments/components/PaymentQr";
+import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
+import { PaymentSimulator } from "@/features/payments/components/PaymentSimulator";
+import { PaymentStatusPanel } from "@/features/payments/components/PaymentStatusPanel";
+import { useInvoicePayment } from "@/features/payments/hooks";
+import { formatAmount } from "@/features/payments/status";
+import { paymentUri } from "@/features/payments/verify";
+import { formatDate } from "@/lib/helpers";
+import { USDC, shortKey } from "@/lib/stellar/config";
+
+/**
+ * The customer's payment page: how much, in what, to which wallet, with which memo, and a live status
+ * once they've paid. Amount and memo come first, because a payment without the memo can't be matched.
+ */
+export function PaymentRequest({ invoice }: { invoice: InvoiceType }) {
+	const { state, expectation, updatedAt } = useInvoicePayment(invoice);
+
+	if (!expectation || !state) {
+		return (
+			<p className="mx-auto mt-16 max-w-md rounded-xl bg-warning-50 p-5 text-center text-sm text-warning-800">
+				This invoice can&apos;t take payments yet: the business hasn&apos;t set up a receiving wallet. Please contact them.
+			</p>
+		);
+	}
+
+	const closed = state.status === "paid" || state.status === "cancelled" || state.status === "expired";
+	const uri = paymentUri(expectation);
+
+	return (
+		<section className="mx-auto mt-10 grid max-w-5xl gap-6 md:mt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-8">
+			<div className="animate-rise space-y-5">
+				<div className="rounded-[5px] border border-[#9fb4dd] bg-primary-20 sm:rounded-[10px]">
+					<div className="flex flex-col items-center gap-2 border-b border-b-[#9fb4dd]/50 p-6 sm:p-8">
+						<p className="text-sm font-bold tracking-wide sm:text-base">AMOUNT DUE</p>
+						<p className="text-3xl font-bold tracking-tight text-primary-500 sm:text-4xl">
+							{formatAmount(expectation.amount)} <span className="text-xl sm:text-2xl">{expectation.asset.code}</span>
+						</p>
+						<PaymentStatusBadge status={state.status} />
+					</div>
+					<dl className="space-y-2 p-6 text-sm sm:text-base">
+						<Row label="Invoice reference" value={invoice.invoice_number ?? ""} />
+						<Row label="Asset" value={USDC.label} />
+						<Row label="Invoice date" value={formatDate(invoice.created_at || "")} />
+						<Row label="Due date" value={formatDate(invoice.due_date || "")} />
+						{invoice.createdBy?.business_name && <Row label="Billed by" value={invoice.createdBy.business_name} />}
+					</dl>
+				</div>
+
+				<div className="flex gap-3 rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700">
+					<Info size={18} className="mt-0.5 shrink-0" />
+					<p>This is a Stellar Testnet payment. Testnet assets have no real value and no real money is transferred.</p>
+				</div>
+			</div>
+
+			<div className="animate-rise space-y-5" style={{ "--i": 1 } as React.CSSProperties}>
+				{!closed && (
+					<div className="space-y-5 rounded-xl border border-primary-50 bg-neutral-500 p-4 sm:p-6">
+						<h3 className="font-bold sm:text-lg">How to pay</h3>
+						<CopyField
+							label="Send to this wallet"
+							value={expectation.recipient}
+							display={shortKey(expectation.recipient, 10, 8)}
+							mono
+						/>
+						<CopyField
+							label="Payment reference / memo (required)"
+							value={expectation.reference}
+							mono
+							hint={
+								<>
+									Add this as a <strong>text memo</strong>. Without it, the payment can&apos;t be matched to this invoice.
+								</>
+							}
+						/>
+						<p className="text-xs text-neutral-900">
+							Send exactly {formatAmount(expectation.amount)} {expectation.asset.code} issued by {shortKey(USDC.issuer)}. Other assets or
+							smaller amounts won&apos;t be accepted.
+						</p>
+
+						<div className="flex flex-col items-center gap-3 border-t border-primary-50 pt-5 sm:flex-row sm:items-center">
+							<PaymentQr value={uri} label="QR code with the payment details for a Stellar wallet" />
+							<div className="w-full space-y-3 text-center sm:text-left">
+								<p className="text-sm text-neutral-900">Scan with a Stellar wallet, or open one on this device with the details filled in.</p>
+								<Button asChild className="w-full sm:max-w-[220px]">
+									<a href={uri}>
+										<Wallet /> Open wallet
+									</a>
+								</Button>
+							</div>
+						</div>
+					</div>
+				)}
+
+				<div>
+					<h3 className="mb-3 font-bold sm:text-lg">Current status</h3>
+					<PaymentStatusPanel state={state} updatedAt={updatedAt} />
+				</div>
+
+				{!closed && <PaymentSimulator invoiceId={expectation.invoiceId} />}
+
+				<div className="flex justify-center">
+					<ExplorerLink hash={state.payment?.hash} account={state.payment ? undefined : expectation.recipient} className="text-sm">
+						View on explorer
+					</ExplorerLink>
+				</div>
+			</div>
+		</section>
+	);
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+	return (
+		<div className="flex flex-wrap justify-between gap-x-5">
+			<dt>{label}</dt>
+			<dd className="font-bold break-all">{value}</dd>
+		</div>
+	);
+}

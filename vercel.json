@@ -1,0 +1,119 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "landing": {
+      "root": "apps/landing",
+      "framework": "nextjs"
+    },
+    "web": {
+      "root": "apps/web",
+      "framework": "nextjs"
+    },
+    "admin": {
+      "root": "apps/admin",
+      "framework": "nextjs"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/app",
+      "has": [
+        {
+          "type": "host",
+          "value": "usestellance.com"
+        }
+      ],
+      "destination": "https://app.usestellance.com/",
+      "permanent": false
+    },
+    {
+      "source": "/app/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "usestellance.com"
+        }
+      ],
+      "destination": "https://app.usestellance.com/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "has": [
+        {
+          "type": "host",
+          "value": "usestellance.com"
+        }
+      ],
+      "destination": "https://admin.usestellance.com/",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "usestellance.com"
+        }
+      ],
+      "destination": "https://admin.usestellance.com/:path*",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.usestellance.com"
+        }
+      ],
+      "destination": {
+        "service": "web"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.usestellance.com"
+        }
+      ],
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
+      "source": "/app",
+      "destination": {
+        "service": "web"
+      }
+    },
+    {
+      "source": "/app/(.*)",
+      "destination": {
+        "service": "web"
+      }
+    },
+    {
+      "source": "/admin",
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
+      "source": "/admin/(.*)",
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "landing"
+      }
+    }
+  ]
+}
