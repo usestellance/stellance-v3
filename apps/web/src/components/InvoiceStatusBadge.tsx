@@ -91,7 +91,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     ? (statusLabelMap[role][status] ?? status)
     : status;
 
-  const baseStyles = `px-2.5 font-medium rounded-[5px] flex justify-center items-center ${
+  const baseStyles = `px-2.5 font-medium rounded-[5px] flex justify-center items-center whitespace-nowrap shrink-0 ${
     variant === "filled"
       ? "min-w-[80px] w-fit h-10 text-sm text-neutral-comment"
       : "text-xs h-7 min-w-[60px] w-fit"
