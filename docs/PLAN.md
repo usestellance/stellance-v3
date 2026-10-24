@@ -12,34 +12,33 @@ Create Invoice → Share Payment Request → Pay on Testnet → Detect → Verif
 The rule that governs everything: **an invoice is never shown as Paid until the backend has verified a matching
 Stellar transaction.** Seeing a transaction is not enough.
 
-## Status (2026-10-20)
+## Status (2026-10-23)
 
-**Frontend: built, running on demo data.** Every D3 screen exists (below, checked). The apps run on
-`@repo/mock-api` by default (`NEXT_PUBLIC_API_SOURCE=mock`), which also serves the payment contract below, so the
-whole lifecycle can be clicked through and demoed: "Simulate a Testnet payment" on the payment pages plays the
-customer and the network. Against the live API, payments are read from Stellar Testnet directly
-(`NEXT_PUBLIC_PAYMENTS_SOURCE=horizon`) with the same verification rules, which pass all PRD edge cases on real
-Testnet transactions (`docs/test-results.md`). "Paid" still only ever comes from the API.
+**Backend: payments-v2 is live.** The API detects Testnet payments to merchant wallets, verifies them against the
+invoice (recipient, asset code + issuer, amount, `STL-…` memo reference, tx success), marks the invoice paid and
+sends an "Invoice Paid" notification. Proven end to end on INV-20261023-0020 (paid about 11 s after the payment). Gaps
+still on the backend side are listed in the backend-gaps document and `docs/test-results.md` §4.
 
-**Backend: D1 and D2 are not started.** The live API has no payment fields, no detection and none of the endpoints
-below. It also marks an invoice paid from any client-supplied hash (`PATCH /invoice/{id}/mark-paid`, see
-test results). Switch the web app to the backend with `NEXT_PUBLIC_API_SOURCE=live` + `NEXT_PUBLIC_PAYMENTS_SOURCE=api`
-once these exist.
+**Frontend: wired to payments-v2, still on demo data by default.** The payment screens read the endpoints below (the
+client no longer reads Horizon or derives references), and `@repo/mock-api` serves the same shapes, so
+`NEXT_PUBLIC_API_SOURCE=live` is the only switch. "Simulate a Testnet payment" on the payment pages plays the customer
+and the network in demo mode. `pnpm check-types`, `pnpm lint` (0 errors, 0 warnings) and all three builds pass.
 
-### Backend contract the frontend is built against
-
-Fields come straight from `features/payments/api.ts` (`PaymentDto`) and `features/invoice/types.ts`; the mock
-(`packages/mock-api/src/handlers`) implements exactly this.
+### Backend contract (live, captured 2026-10-22)
 
 | Endpoint | Returns |
 | --- | --- |
-| Invoice fields on `GET /invoice/{id}`, `GET /invoice`, `GET /invoice/search` | `payment_reference`, `payment_recipient`, `payment_asset_code`, `payment_asset_issuer`, `payment_amount`, `payment_expires_at` (the app falls back to invoice number, merchant wallet, USDC and total) |
-| `GET /invoice/{id}/payments` (public, like the payment page) | `PaymentDto[]` for that invoice: every attempt, valid or not |
-| `GET /payment?page&size&status` (merchant) | `{ payments: PaymentDto[], meta }` |
-| `GET /payment/{id}` (merchant) | `PaymentDto` with checks and reasons |
-| `GET /admin/payments?page&limit&status` | `{ payments: (PaymentDto & { merchant_email })[], meta }` |
-| `PaymentDto` | `id, transaction_hash, sender, recipient, asset_code, asset_issuer, amount, payment_reference, transaction_successful, verification_status (detected·verified·invalid·unmatched·failed), reasons[] (insufficient_amount·wrong_asset·wrong_recipient·missing_reference·unknown_reference·transaction_failed·duplicate), checks {recipient, asset, amount, reference, success, invoice: pass·fail·skip}, invoice_id, invoice_number, expected {amount, asset_code, asset_issuer, recipient, payment_reference}, detected_at, verified_at` |
-| Fixes | `/profile/me` wallet needs its `id`; `mark-paid` must verify on chain or be removed; `GET /invoice/review/{id}` should be an authenticated POST; the public invoice should not expose the merchant's phone/email; refresh the Swagger spec |
+| `GET /payments/request/{invoice_url}` (public) | `invoice_id, invoice_number, invoice_status, payment_status, amount ("x.xxxxxx"), asset, asset_issuer, recipient, payment_reference (STL-…), network, expires_at`, plus `payment_detected_at, verification_status, verified_at, paid_at, transaction_hash, explorer_url` once paid |
+| `GET /payments/invoice/{id}` (merchant) | The same plus `payments[]` (every attempt) |
+| `GET /payments?status&limit&offset` (merchant) | Bare array of payment records |
+| `POST /payments/verify {transaction_hash}` | The records for that hash (404 if Stellar has no such tx) |
+| `GET /admin/payments?page&limit&status&search` | `{ payments, meta }` |
+| Payment record | `id, invoice_id?, transaction_hash, explorer_url, sender, recipient, asset ("CODE:ISSUER" or "XLM"), amount (string), payment_reference, verification_status (pending·verified·invalid·unmatched·failed), failure_reason?, ledger_closed_at, detected_at, verified_at?` |
+| Other changes | Invoice statuses add `expired`, `invalid_payment` (no `overdue`); review is `POST /invoice/review/{id} {approve}`; key export is `GET /wallet/export/{id}`; incoming ledger entries are type `payment` with `invoice_id` |
+
+Still wanted from the backend: `GET /payments/{id}`, a machine-readable `failure_code` and per-check results (the
+app parses `failure_reason` text for now), `invoice_number` / `merchant_email` on records, notifications for
+invalid and unmatched payments, and consistent paging across list endpoints.
 
 ## Where Round 1 leaves us (audit of this repo)
 
@@ -133,15 +132,14 @@ Record each run (invoice id, tx hash, explorer link, result) in `docs/test-resul
 
 ## Where the screens live
 
-- `features/payments/`: `verify.ts` (the rules), `horizon.ts` (Testnet reader), `api.ts` (the one seam), `status.ts` (every label and colour), `hooks.ts`, `components/` (status badge, state icon, timeline, checklist, copy field, QR, simulator).
+- `features/payments/`: `api.ts` (the one seam: DTOs and mapping), `status.ts` (every label and colour), `hooks.ts`, `components/` (status badge, state icon, timeline, checklist, copy field, QR, simulator).
 - Routes: `/invoices/[id]/payment` (merchant details), `/client/[id]/make-payment` (customer), `/transactions/payments` and `/transactions/payments/[id]` (verified · invalid · unmatched · failed).
 - Admin (`apps/admin`): `/payments` payment review.
 
 ## Housekeeping found during the restructure
 
-- `pnpm lint` fails on existing code: 22 errors in `apps/web` (13 `no-explicit-any`, 4 setState-in-effect, 2 `useState`
-  called inside a callback in `CreateInvoiceForm{Desktop,Mobile}.tsx`, which is a real hooks bug, plus unescaped quotes),
-  1 in `apps/landing`, and ~70 warnings (mostly unused imports).
+- Lint debt from round 1 (`any`, setState-in-effect, the `useState`-in-callback hooks bug in the create forms, unused
+  imports) is cleared: 0 errors, 0 warnings.
 - `xlsx` on npm is frozen at 0.18.5 with known advisories. SheetJS now ships from its own CDN, or switch to CSV for exports.
 - `recharts` stays on 2.x (the shadcn `chart.tsx` is written for it) and `@tanstack/react-table` on 8.x; both have new
   majors that need code changes.

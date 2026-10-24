@@ -1,3 +1,4 @@
+import { withBasePath } from "@/lib/site";
 import React from "react";
 import InvoiceCard from "@/components/MobileInvoiceList";
 import InvoiceFilter from "@/features/invoice/components/InvoiceFilter";
@@ -54,7 +55,7 @@ const Invoices = () => {
             // EMPTY UI
             <div className="mt-14 flex flex-col items-center gap-8 md:mt-20 lg:mt-24 max-w-[163px] mx-auto">
               <Image
-                src="/images/no-Invoice-svg.svg"
+                src={withBasePath("/images/no-Invoice-svg.svg")}
                 alt="No Invoice"
                 height={200}
                 width={200}

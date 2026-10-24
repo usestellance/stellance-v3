@@ -1,12 +1,12 @@
 /**
  * Payment detection and verification (Instaward round 2, docs/PLAN.md).
  *
- * An invoice carries an expectation (who must be paid, in what asset, how much, with which reference).
- * Every incoming Stellar payment is checked against it and gets a verification status. The invoice's
- * payment status follows from those results, but "paid" only ever comes from the API.
+ * The API owns all of it: it gives every invoice a payment request (recipient, asset, amount, reference),
+ * watches Stellar Testnet, checks each incoming payment and marks the invoice paid. These are the app's
+ * shapes for what it returns; `api.ts` maps the wire format onto them.
  */
 
-/** What the invoice page shows. Mirrors the PRD's states, plus draft / cancelled from the invoice itself. */
+/** What an invoice's payment screens show. Follows the API's `payment_status`, plus a draft's "not started". */
 export type PaymentStatus =
 	| "not_started"
 	| "awaiting_payment"
@@ -19,9 +19,10 @@ export type PaymentStatus =
 	| "expired"
 	| "cancelled";
 
-/** One payment's result (PRD "Suggested Verification Status"). */
+/** One payment's verdict (the API's `verification_status`). */
 export type VerificationStatus = "detected" | "verified" | "invalid" | "unmatched" | "failed";
 
+/** Why a payment did not settle, read from the API's `failure_reason`. */
 export type PaymentReason =
 	| "insufficient_amount"
 	| "wrong_asset"
@@ -40,37 +41,35 @@ export interface StellarAsset {
 	issuer: string | null;
 }
 
+/** An invoice's payment request: what the payer must send, and where it stands. */
 export interface PaymentExpectation {
 	invoiceId: string;
 	invoiceNumber: string;
-	invoiceUrl?: string;
 	recipient: string;
 	asset: StellarAsset;
 	amount: number;
-	/** The memo the payer must include. Today the invoice number (fits a 28-byte text memo). */
+	/** The memo the payer must include: the API's `payment_reference` (`STL-…`). */
 	reference: string;
-	dueDate?: string;
+	expiresAt: string | null;
 }
 
 export interface DetectedPayment {
-	/** Stellar operation id: unique per payment, so the same payment is never counted twice. */
 	id: string;
 	hash: string;
+	explorerUrl: string | null;
 	sender: string;
 	recipient: string;
 	asset: StellarAsset;
 	amount: number;
 	memo: string | null;
-	successful: boolean;
 	detectedAt: string;
-	/** When the checks ran (the API sets this; client-side checks run on read). */
 	verifiedAt: string | null;
 	status: VerificationStatus;
+	/** The API's own words for why it did not settle. */
+	failureReason: string | null;
 	reasons: PaymentReason[];
 	checks: Record<CheckKey, CheckResult>;
 	invoiceId: string | null;
-	invoiceNumber: string | null;
-	expected: Pick<PaymentExpectation, "amount" | "asset" | "recipient" | "reference"> | null;
 }
 
 export interface InvoicePaymentState {

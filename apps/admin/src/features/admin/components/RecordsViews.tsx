@@ -8,7 +8,7 @@ import axios from "axios";
 import { DataTable, ErrorNote, FilterChips, INVOICE_TONE, KeyValue, PAYMENT_TONE, PageHeader, Pagination, Panel, Pill, SearchField, TX_TONE } from "@/components/Console";
 import { useInvoice, useInvoices, useNetwork, usePayments, useTransactions } from "@/features/admin/hooks";
 import { errorMessage } from "@/lib/api/client";
-import { explorerTx, formatDate, formatUsdc, shortKey, titleCase } from "@/lib/format";
+import { assetCode, explorerTx, formatAmount, formatDate, formatUsdc, shortKey } from "@/lib/format";
 
 const INVOICE_FILTERS = [
 	{ value: "all", label: "All" },
@@ -16,7 +16,8 @@ const INVOICE_FILTERS = [
 	{ value: "sent", label: "Sent" },
 	{ value: "viewed", label: "Viewed" },
 	{ value: "paid", label: "Paid" },
-	{ value: "overdue", label: "Overdue" },
+	{ value: "invalid_payment", label: "Invalid payment" },
+	{ value: "expired", label: "Expired" },
 	{ value: "cancelled", label: "Cancelled" },
 ];
 
@@ -154,11 +155,13 @@ const PAYMENT_FILTERS = [
 	{ value: "verified", label: "Verified" },
 ];
 
-/** Detected payments and their verification result, for review. Uses the planned /admin/payments. */
+/** Detected payments and their verdicts across the platform, for review (GET /admin/payments). */
 export function PaymentsView({ initialStatus = "all" }: { initialStatus?: string }) {
 	const [page, setPage] = useState(1);
 	const [status, setStatus] = useState(initialStatus);
-	const { data, isLoading, error } = usePayments(page, status);
+	const [search, setSearch] = useState("");
+	const query = useDeferredValue(search.trim());
+	const { data, isLoading, error } = usePayments(page, status, 20, query);
 	const notBuilt = axios.isAxiosError(error) && error.response?.status === 404;
 
 	return (
@@ -168,7 +171,15 @@ export function PaymentsView({ initialStatus = "all" }: { initialStatus?: string
 				description="Every Stellar payment the platform detected, and whether it passed verification. Invalid and unmatched payments never mark an invoice paid."
 			/>
 			<Panel>
-				<div className="mb-5">
+				<div className="mb-5 space-y-4">
+					<SearchField
+						value={search}
+						onChange={(v) => {
+							setSearch(v);
+							setPage(1);
+						}}
+						placeholder="Search hash, reference, address or invoice"
+					/>
 					<FilterChips
 						label="Result"
 						value={status}
@@ -181,7 +192,7 @@ export function PaymentsView({ initialStatus = "all" }: { initialStatus?: string
 				</div>
 				{notBuilt ? (
 					<p className="rounded-lg bg-warning-50 p-4 text-sm text-warning-800">
-						The API doesn&apos;t expose <code>/admin/payments</code> yet. This screen fills in once payment detection ships (docs/PLAN.md, D2).
+						This API doesn&apos;t expose <code>/admin/payments</code>. Check that the console points at the current Stellance API.
 					</p>
 				) : (
 					<>
@@ -192,18 +203,17 @@ export function PaymentsView({ initialStatus = "all" }: { initialStatus?: string
 							rowKey={(r) => r.id}
 							empty="No payments with this result."
 							columns={[
-								{ key: "i", header: "Invoice", cell: (r) => r.invoice_number ?? <span className="text-neutral-900">No match</span> },
-								{ key: "m", header: "Merchant", cell: (r) => <span className="text-neutral-900">{r.merchant_email}</span> },
-								{ key: "a", header: "Received", cell: (r) => `${r.amount} ${r.asset_code}` },
-								{ key: "memo", header: "Memo", cell: (r) => <span className="font-mono text-xs">{r.payment_reference ?? "none"}</span> },
-								{ key: "s", header: "Result", cell: (r) => <Pill tone={PAYMENT_TONE[r.verification_status]}>{r.verification_status === "detected" ? "verifying" : r.verification_status}</Pill> },
-								{ key: "r", header: "Reason", cell: (r) => <span className="text-neutral-900">{r.reasons.map(titleCase).join(", ") || "—"}</span> },
+								{ key: "memo", header: "Reference", cell: (r) => <span className="font-mono text-xs">{r.payment_reference ?? "none"}</span> },
+								{ key: "m", header: "Merchant", cell: (r) => <span className="text-xs text-neutral-900" title={r.recipient}>{r.merchant_email ?? <span className="font-mono">{shortKey(r.recipient)}</span>}</span> },
+								{ key: "a", header: "Received", cell: (r) => `${formatAmount(r.amount)} ${assetCode(r)}` },
+								{ key: "s", header: "Result", cell: (r) => <Pill tone={PAYMENT_TONE[r.verification_status] ?? "info"}>{r.verification_status === "detected" || r.verification_status === "pending" ? "verifying" : r.verification_status}</Pill> },
+								{ key: "r", header: "Reason", cell: (r) => <span className="whitespace-normal text-neutral-900">{r.failure_reason || (r.invoice_number ? `Paid ${r.invoice_number}` : r.invoice_id ? "Matched an invoice" : "—")}</span>, className: "min-w-[220px]" },
 								{ key: "d", header: "Detected", cell: (r) => formatDate(r.detected_at, true) },
 								{
 									key: "tx",
 									header: "Transaction",
 									cell: (r) => (
-										<a href={explorerTx(r.transaction_hash)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-xs text-info-500 hover:underline" onClick={(e) => e.stopPropagation()}>
+										<a href={r.explorer_url || explorerTx(r.transaction_hash)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-xs text-info-500 hover:underline" onClick={(e) => e.stopPropagation()}>
 											{shortKey(r.transaction_hash, 6, 4)} <ExternalLink size={12} />
 										</a>
 									),

@@ -4,14 +4,13 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { InvoiceType } from "@/features/invoice/types";
 import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
-import { useInvoicePayment, useMerchantWallet } from "@/features/payments/hooks";
+import { useInvoicePayment } from "@/features/payments/hooks";
 import { PAYMENT_STATUS, formatAmount } from "@/features/payments/status";
 import { invoiceRoutes } from "@/lib/routes";
 
 /** On the invoice preview: how much is expected, where the payment stands, and the way into the details. */
 export function InvoicePaymentSummary({ invoice }: { invoice: InvoiceType }) {
-	const wallet = useMerchantWallet();
-	const { state } = useInvoicePayment(invoice, { recipient: wallet });
+	const { data: state } = useInvoicePayment(invoice.id);
 	if (!state || !invoice.id) return null;
 
 	return (

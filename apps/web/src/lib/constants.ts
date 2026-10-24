@@ -7,7 +7,9 @@ export const invoiceStatusOptions: { label: string; value: InvoiceStatus }[] = [
   { label: "Sent", value: "sent" },
   { label: "Pending", value: "viewed" },
   { label: "Draft", value: "draft" },
-  { label: "Overdue", value: "overdue" },
+  // The API replaced "overdue" with "expired" (2026-10-21) and added "invalid_payment".
+  { label: "Invalid payment", value: "invalid_payment" },
+  { label: "Expired", value: "expired" },
   { label: "Cancelled", value: "cancelled" },
 ];
 

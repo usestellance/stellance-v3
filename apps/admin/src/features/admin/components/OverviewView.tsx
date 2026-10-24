@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { DataTable, INVOICE_TONE, PAYMENT_TONE, PageHeader, Panel, Pill, StatCard } from "@/components/Console";
 import { useInvoices, usePayments, useStats, useUsers } from "@/features/admin/hooks";
-import { formatDate, formatNumber, formatUsdc, titleCase } from "@/lib/format";
+import { assetCode, formatAmount, formatDate, formatNumber, formatUsdc, shortKey } from "@/lib/format";
 
 /** Platform health at a glance: totals, what needs review, and the newest users and invoices. */
 export function OverviewView() {
@@ -84,11 +84,11 @@ export function OverviewView() {
 						rowKey={(r) => r.id}
 						onRowClick={() => router.push("/payments")}
 						columns={[
-							{ key: "i", header: "Invoice", cell: (r) => r.invoice_number ?? <span className="text-neutral-900">No match</span> },
-							{ key: "m", header: "Merchant", cell: (r) => <span className="text-neutral-900">{r.merchant_email}</span> },
-							{ key: "a", header: "Received", cell: (r) => `${r.amount} ${r.asset_code}` },
-							{ key: "s", header: "Result", cell: (r) => <Pill tone={PAYMENT_TONE[r.verification_status]}>{r.verification_status}</Pill> },
-							{ key: "r", header: "Reason", cell: (r) => <span className="text-neutral-900">{r.reasons.map(titleCase).join(", ") || "—"}</span> },
+							{ key: "memo", header: "Reference", cell: (r) => <span className="font-mono text-xs">{r.payment_reference ?? "none"}</span> },
+							{ key: "m", header: "Merchant wallet", cell: (r) => <span className="font-mono text-xs text-neutral-900">{shortKey(r.recipient)}</span> },
+							{ key: "a", header: "Received", cell: (r) => `${formatAmount(r.amount)} ${assetCode(r)}` },
+							{ key: "s", header: "Result", cell: (r) => <Pill tone={PAYMENT_TONE[r.verification_status] ?? "info"}>{r.verification_status}</Pill> },
+							{ key: "r", header: "Reason", cell: (r) => <span className="whitespace-normal text-neutral-900">{r.failure_reason || "—"}</span>, className: "min-w-[220px]" },
 						]}
 					/>
 				</Panel>

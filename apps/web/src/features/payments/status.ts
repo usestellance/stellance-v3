@@ -1,4 +1,4 @@
-import type { DetectedPayment, PaymentReason, PaymentStatus, VerificationStatus } from "@/features/payments/types";
+import type { DetectedPayment, PaymentExpectation, PaymentReason, PaymentStatus, VerificationStatus } from "@/features/payments/types";
 
 /**
  * Every payment label, colour and sentence lives here, so the badge on a list row, the state card and
@@ -115,14 +115,22 @@ export const VERIFICATION_TO_PAYMENT: Record<VerificationStatus, PaymentStatus> 
 
 const asset = (code: string) => (code === "XLM" ? "XLM" : code);
 
-/** A short headline and a sentence for each reason a payment did not verify. */
-export function reasonCopy(reason: PaymentReason, payment: DetectedPayment): { title: string; detail: string } {
-	const expected = payment.expected;
+/**
+ * A short headline and a sentence for each reason a payment did not verify. `expected` is the invoice's
+ * payment request when the screen has it; otherwise the API's own sentence explains the mismatch.
+ */
+export function reasonCopy(
+	reason: PaymentReason,
+	payment: DetectedPayment,
+	expected?: Pick<PaymentExpectation, "amount" | "asset"> | null,
+): { title: string; detail: string } {
 	switch (reason) {
 		case "insufficient_amount":
 			return {
 				title: "Amount mismatch",
-				detail: `Expected ${formatAmount(expected?.amount ?? 0)} ${asset(expected?.asset.code ?? "")}; received ${formatAmount(payment.amount)} ${asset(payment.asset.code)}.`,
+				detail: expected
+					? `Expected ${formatAmount(expected.amount)} ${asset(expected.asset.code)}; received ${formatAmount(payment.amount)} ${asset(payment.asset.code)}.`
+					: `Received ${formatAmount(payment.amount)} ${asset(payment.asset.code)}, less than the invoice asks for.`,
 			};
 		case "wrong_asset":
 			return {

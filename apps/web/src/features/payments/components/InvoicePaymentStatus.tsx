@@ -1,11 +1,8 @@
-"use client";
-
 import type { InvoiceType } from "@/features/invoice/types";
+import { paymentStatusOf } from "@/features/payments/api";
 import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
-import { useInvoicePaymentStatus } from "@/features/payments/hooks";
 
-/** The payment-status badge for an invoice row (lists, overview). */
+/** The payment-status badge for an invoice row (lists, overview), read from the invoice's own status. */
 export function InvoicePaymentStatus({ invoice, className }: { invoice: InvoiceType; className?: string }) {
-	const status = useInvoicePaymentStatus(invoice);
-	return status ? <PaymentStatusBadge status={status} className={className} /> : <span className="text-neutral-900">—</span>;
+	return <PaymentStatusBadge status={paymentStatusOf(invoice)} className={className} />;
 }

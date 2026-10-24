@@ -1,7 +1,6 @@
 "use client";
 
 import Notifications from "@/features/notifications/components/Notifications";
-import { useGetNotifications } from "@/features/notifications/hooks";
 
 export default function Page() {
   // const { data } = useGetNotifications();

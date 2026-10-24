@@ -56,7 +56,7 @@ const CreatePinForm = ({ onSubmit, isLoading }: Props) => {
 					{/* <h3 className="text-xl font-semibold">Create Wallet PIN</h3> */}
 
 					<p className="mt-2 text-sm text-neutral-900">
-						Create a secure transaction PIN. You'll be asked for this PIN
+						Create a secure transaction PIN. You&apos;ll be asked for this PIN
 						whenever you transfer funds or perform sensitive wallet actions.
 					</p>
 				</div>
@@ -129,7 +129,7 @@ const CreatePinForm = ({ onSubmit, isLoading }: Props) => {
 
 				<div className="rounded-lg border border-warning-300 bg-warning-50 p-4">
 					<p className="text-sm text-warning-700">
-						Keep your wallet PIN private. Never share it with anyone. You'll
+						Keep your wallet PIN private. Never share it with anyone. You&apos;ll
 						need it to authorize wallet transfers and other sensitive actions.
 					</p>
 				</div>

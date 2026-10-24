@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { CopyField } from "@/features/payments/components/CopyField";
-import { useMerchantWallet } from "@/features/payments/hooks";
+import { useInvoicePayment, useMerchantWallet } from "@/features/payments/hooks";
 import { USDC, shortKey } from "@/lib/stellar/config";
 import { walletRoutes } from "@/lib/routes";
 
 /**
  * On Create / Edit Invoice: what the customer will be asked to pay and how the payment is matched.
- * Recipient and asset are fixed for now (the merchant's wallet, USDC on Testnet); the reference is the
- * invoice number, assigned when the invoice is saved.
+ * Recipient and asset are fixed for now (the merchant's wallet, USDC on Testnet). The API assigns the
+ * payment reference (STL-…) when the invoice is saved; editing shows the real one.
  */
-export function PaymentRequirements({ total, invoiceNumber }: { total: string; invoiceNumber?: string }) {
+export function PaymentRequirements({ total, invoiceId }: { total: string; invoiceId?: string }) {
 	const wallet = useMerchantWallet();
+	const { data: request } = useInvoicePayment(invoiceId, { poll: false });
+	const reference = request?.expectation.reference;
 
 	return (
 		<section className="custom-container mt-10 lg:mt-[60px]">
@@ -64,7 +66,7 @@ export function PaymentRequirements({ total, invoiceNumber }: { total: string; i
 					<div>
 						<p className="mb-2 text-sm text-neutral-900">Payment reference / memo</p>
 						<p className="flex h-12 items-center rounded-lg bg-neutral-500 px-4 font-mono text-sm text-primary-500">
-							{invoiceNumber ?? "Assigned when you save (the invoice number)"}
+							{reference ?? "Assigned by Stellance when you save"}
 						</p>
 						<p className="mt-2 text-xs text-neutral-900">Used to match the Stellar payment to this invoice.</p>
 					</div>

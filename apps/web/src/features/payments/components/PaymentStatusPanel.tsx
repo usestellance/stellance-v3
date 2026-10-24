@@ -22,7 +22,14 @@ export function PaymentStatusPanel({
 }) {
 	const meta = PAYMENT_STATUS[state.status];
 	const payment = state.payment;
-	const problems = payment && payment.status !== "verified" ? payment.reasons : [];
+	const unsettled = payment && payment.status !== "verified" && payment.status !== "detected";
+	const problems = unsettled
+		? payment.reasons.length
+			? payment.reasons.map((reason) => reasonCopy(reason, payment, state.expectation))
+			: payment.failureReason
+				? [{ title: "Not accepted", detail: payment.failureReason }]
+				: []
+		: [];
 
 	return (
 		<div className="rounded-xl border border-primary-50 bg-neutral-500 p-4 sm:p-6">
@@ -42,17 +49,14 @@ export function PaymentStatusPanel({
 				</div>
 			)}
 
-			{problems.length > 0 && payment && (
+			{problems.length > 0 && (
 				<ul className="mt-6 space-y-2">
-					{problems.map((reason) => {
-						const copy = reasonCopy(reason, payment);
-						return (
-							<li key={reason} className="animate-rise rounded-lg bg-error-50 px-4 py-3 text-sm">
-								<p className="font-medium text-error-500">{copy.title}</p>
-								<p className="mt-0.5 text-error-500/80">{copy.detail}</p>
-							</li>
-						);
-					})}
+					{problems.map((copy) => (
+						<li key={copy.title} className="animate-rise rounded-lg bg-error-50 px-4 py-3 text-sm">
+							<p className="font-medium text-error-500">{copy.title}</p>
+							<p className="mt-0.5 text-error-500/80">{copy.detail}</p>
+						</li>
+					))}
 				</ul>
 			)}
 
@@ -92,7 +96,7 @@ export function PaymentStatusPanel({
 
 			{meta.live && updatedAt ? (
 				<p className="mt-5 text-xs text-neutral-900">
-					Checking Stellar Testnet automatically · last checked{" "}
+					Stellance checks Stellar Testnet automatically · last updated{" "}
 					{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(updatedAt)}
 				</p>
 			) : null}

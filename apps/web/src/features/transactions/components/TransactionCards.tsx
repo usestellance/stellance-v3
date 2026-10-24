@@ -6,8 +6,7 @@ import {
 	LucideCircleX,
 } from "lucide-react";
 import { FC } from "react";
-import { ITransaction } from "@/features/transactions/types";
-import { formatCurrency } from "@/lib/helpers";
+import { ITransaction, formatTokenAmount, isIncoming } from "@/features/transactions/types";
 import Link from "next/link";
 import { transactionsRoutes } from "@/lib/routes";
 
@@ -22,7 +21,8 @@ const TransactionCards: FC<ITransaction> = ({
 	network_fee,
 	id,
 }) => {
-	const isFunding = transaction_type === "funding";
+	const isFunding = isIncoming({ transaction_type });
+	const failed = status === "failed";
 
 	const date = new Date(confirmed_at || created_at).toLocaleString("en-US", {
 		month: "short",
@@ -86,11 +86,11 @@ const TransactionCards: FC<ITransaction> = ({
 				<div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:items-end sm:justify-start sm:gap-2 sm:text-right sm:shrink-0">
 					<h3
 						className={`font-bold text-lg sm:text-xl lg:text-2xl whitespace-nowrap ${
-							isFunding ? "text-success-500" : "text-error-500"
+							failed ? "text-neutral-900 line-through" : isFunding ? "text-success-500" : "text-error-500"
 						}`}
 					>
-						{isFunding ? "+" : "-"}
-						{formatCurrency(amount)} {currency.toUpperCase()}
+						{failed ? "" : isFunding ? "+" : "-"}
+						{formatTokenAmount(amount, currency)}
 					</h3>
 
 					<div
@@ -102,13 +102,15 @@ const TransactionCards: FC<ITransaction> = ({
 				</div>
 			</div>
 
-			<div className="mt-4 border-t border-primary-50 pt-3 flex items-center justify-between text-sm text-neutral-900">
-				<span>Network Fee</span>
+			{network_fee != null && (
+				<div className="mt-4 border-t border-primary-50 pt-3 flex items-center justify-between text-sm text-neutral-900">
+					<span>Network Fee</span>
 
-				<span className="font-medium text-primary-600">
-					{network_fee} {currency.toUpperCase()}
-				</span>
-			</div>
+					<span className="font-medium text-primary-600">
+						{network_fee} {currency.toUpperCase()}
+					</span>
+				</div>
+			)}
 		</Link>
 	);
 };

@@ -68,15 +68,18 @@ jspdf (+ autotable) and xlsx for exports, `qrcode`, `@react-oauth/google`, gsap 
 
 ## Payments (`apps/web/src/features/payments`)
 
-- `verify.ts`: the PRD rules as pure functions (recipient, asset code + issuer, amount in stroops, memo, tx success,
-  invoice match, duplicates, one record per operation id). `invoicePaymentState` derives the invoice's status;
-  "paid" only ever comes from the API's invoice status.
-- `api.ts` is the one seam: `PAYMENTS_SOURCE` = `api` (backend endpoints in `docs/PLAN.md`; served by the mock) or
-  `horizon` (`horizon.ts` reads Testnet directly). `expectationFor` builds an invoice's requirements, falling back to
-  invoice number / merchant wallet / USDC / total until the API returns its own fields.
+- The API detects and verifies payments; the frontend only reads the results. Endpoints (payments-v2): public
+  `GET /payments/request/{invoice_url}`, merchant `GET /payments/invoice/{id}` (adds `payments[]`), `GET /payments`
+  (bare array, `status`/`limit`/`offset`), `POST /payments/verify {transaction_hash}`, admin `GET /admin/payments`.
+- `api.ts` is the one seam: DTOs, `fromRecord` (record → `DetectedPayment`), `stateFrom` (request → `InvoicePaymentState`),
+  `reasonsFrom` (parses the API's `failure_reason` text into reasons; unknown text is shown as is), `paymentStatusOf`
+  (badge status from the invoice alone). The reference is the API's `STL-…` memo; never invent one in the client.
 - `status.ts` holds every label, colour and sentence (`PAYMENT_STATUS`, `VERIFICATION_STATUS`, `reasonCopy`).
-  Components never decide these.
-- Open invoices poll (8 s) until settled; a verified payment re-reads the invoice until the API marks it paid.
+  Components never decide these. "paid" only ever comes from the API's invoice status.
+- Open invoices poll (6 s) until final; when the status changes, `useRefreshOnSettle` invalidates invoices, payments,
+  notifications and transactions. Live returns an in-flight payment as `pending`; `api.ts` maps it to `detected`.
+- Invoice statuses: draft, sent, viewed, paid, expired, invalid_payment, cancelled. Incoming money is a `payment`
+  ledger entry with `invoice_id` and no `network_fee`.
 - `PaymentSimulator` (mock only) sends the PRD's scenarios through the mock backend: detected for 4 s, then the result,
   then the invoice paid 3 s later if valid.
 - Stellar constants and explorer links: `lib/stellar/config.ts`.

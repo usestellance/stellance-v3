@@ -1,10 +1,10 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- merchant logos are blob, data or remote URLs that next/image cannot optimise */
 
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GoUpload } from "react-icons/go";
-import { useInvoiceItems } from "@/features/invoice/store";
 import {
   InvoiceFormValues,
   invoiceSchema,
@@ -30,12 +30,8 @@ import { Textarea } from "@repo/ui/textarea";
 import { Button } from "@repo/ui/button";
 // import { invoiceItems } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { invoiceRoutes } from "@/lib/routes";
 import { useToast } from "@/lib/use-toast";
-import {
-  InvoiceItemsTypes,
-  InvoiceType,
-} from "@/features/invoice/types";
+import { InvoiceType } from "@/features/invoice/types";
 import { FiTrash } from "react-icons/fi";
 import SelectField from "@repo/ui/select-field";
 import { useCreateInvoice, useUpdateInvoice } from "@/features/invoice/hooks";
@@ -54,6 +50,8 @@ export default function CreateInvoiceFormDesktop({
   const createInvoice = useCreateInvoice();
   const updateInvoice = useUpdateInvoice({ invoiceId: invoice?.id || "" });
   const [make_default, setMake_default] = useState(true);
+  // The logo preview lives here, not inside the field's render callback (hooks can't run in callbacks).
+  const [preview, setPreview] = useState<string | null>(null);
   const router = useRouter();
 
   const isEdit = invoice?.id && edit;
@@ -81,7 +79,6 @@ export default function CreateInvoiceFormDesktop({
     fields: items,
     append,
     remove,
-    update,
   } = useFieldArray({
     control: form.control,
     name: "items",
@@ -147,12 +144,6 @@ export default function CreateInvoiceFormDesktop({
     });
   }, [watchedItems, form]);
 
-  const removeItem = (index: number) => {
-    const updatedItems = [...(form.getValues("items") || [])];
-    updatedItems.splice(index, 1);
-    form.setValue("items", updatedItems);
-  };
-
   const total = calculateTotal(watchedItems ?? []);
 
   const serviceFee = (total * SERVICE_CHARGE) / 100;
@@ -204,7 +195,6 @@ export default function CreateInvoiceFormDesktop({
               control={form.control}
               name="logo"
               render={({ field }) => {
-                const [preview, setPreview] = useState<string | null>(null);
 
                 return (
                   <FormItem className="flex flex-col items-end ">
@@ -608,7 +598,7 @@ export default function CreateInvoiceFormDesktop({
             />
           </div>
 
-          <PaymentRequirements total={netTotal} invoiceNumber={invoice?.invoice_number} />
+          <PaymentRequirements total={netTotal} invoiceId={invoice?.id} />
 
           <div className="flex max-w-full gap-[30px]  justify-center mt-10 lg:mt-[60px]">
             <Button

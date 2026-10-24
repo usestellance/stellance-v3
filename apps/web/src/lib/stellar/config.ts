@@ -4,16 +4,11 @@
  */
 export const STELLAR_NETWORK = "testnet";
 
-export const HORIZON_URL = process.env.NEXT_PUBLIC_HORIZON_URL || "https://horizon-testnet.stellar.org";
-
 export const USDC = {
 	code: "USDC",
 	issuer: process.env.NEXT_PUBLIC_USDC_ISSUER || "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
 	label: "USDC (Testnet)",
 } as const;
-
-/** Stellar memos of type text hold at most 28 bytes; invoice references must fit. */
-export const MEMO_TEXT_MAX_BYTES = 28;
 
 const EXPLORER = "https://stellar.expert/explorer/testnet";
 

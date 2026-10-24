@@ -12,7 +12,7 @@ import { CopyField } from "@/features/payments/components/CopyField";
 import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
 import { PaymentSimulator } from "@/features/payments/components/PaymentSimulator";
 import { PaymentStatusPanel } from "@/features/payments/components/PaymentStatusPanel";
-import { useInvoicePayment, useMerchantWallet } from "@/features/payments/hooks";
+import { useInvoicePayment } from "@/features/payments/hooks";
 import { VERIFICATION_STATUS, formatAmount, formatDateTime } from "@/features/payments/status";
 import { clientRoutes, invoiceRoutes, transactionsRoutes } from "@/lib/routes";
 import { withBasePath } from "@/lib/site";
@@ -22,10 +22,9 @@ import { useToast } from "@/lib/use-toast";
 /** Merchant view: what the invoice expects, the reference to share, and live payment status. */
 export function InvoicePaymentDetails({ invoiceId }: { invoiceId: string }) {
 	const toast = useToast();
-	const wallet = useMerchantWallet();
 	const { data, isLoading, isError } = useGetInvoice({ invoice_id: invoiceId });
 	const invoice = data as InvoiceType | undefined;
-	const { state, updatedAt, isError: networkError } = useInvoicePayment(invoice, { recipient: wallet });
+	const { data: state, dataUpdatedAt: updatedAt, isError: networkError, isLoading: paymentLoading } = useInvoicePayment(invoiceId);
 
 	const requestPath = invoice?.invoice_url ? clientRoutes.MAKE_PAYMENT(invoice.invoice_url) : null;
 
@@ -56,9 +55,9 @@ export function InvoicePaymentDetails({ invoiceId }: { invoiceId: string }) {
 				</div>
 			)}
 			{isError && <p className="mt-16 text-center sm:text-lg">Unable to load this invoice.</p>}
-			{!isLoading && !isError && invoice && !state && (
+			{!isLoading && !isError && invoice && !paymentLoading && !state?.expectation.recipient && (
 				<p className="mt-16 rounded-xl bg-warning-50 p-5 text-center text-sm text-warning-800">
-					Create a wallet first: payments go to your Stellance wallet, so the invoice has no recipient yet.
+					This invoice has no payment request yet. Create a wallet first: payments go to your Stellance wallet.
 				</p>
 			)}
 
@@ -78,7 +77,7 @@ export function InvoicePaymentDetails({ invoiceId }: { invoiceId: string }) {
 							<p className="mt-1 text-2xl font-bold tracking-tight text-primary-500 sm:text-[32px]">
 								{formatAmount(state.expectation.amount)} {state.expectation.asset.code}
 							</p>
-							<p className="mt-1 text-xs text-neutral-900">{USDC.label} · issuer {shortKey(USDC.issuer)}</p>
+							<p className="mt-1 text-xs text-neutral-900">{state.expectation.asset.code} (Testnet) · issuer {shortKey(state.expectation.asset.issuer ?? USDC.issuer)}</p>
 						</div>
 
 						<CopyField label="Recipient wallet" value={state.expectation.recipient} display={shortKey(state.expectation.recipient, 8, 6)} mono />
@@ -95,7 +94,7 @@ export function InvoicePaymentDetails({ invoiceId }: { invoiceId: string }) {
 						</div>
 						<div className="flex flex-wrap items-center justify-between gap-2 text-sm">
 							<span className="text-neutral-900">Payment window</span>
-							<span className="font-medium">until {formatDateTime(state.expectation.dueDate)}</span>
+							<span className="font-medium">until {formatDateTime(state.expectation.expiresAt)}</span>
 						</div>
 					</section>
 
@@ -105,7 +104,7 @@ export function InvoicePaymentDetails({ invoiceId }: { invoiceId: string }) {
 						{state.status !== "not_started" && state.status !== "cancelled" && <PaymentSimulator invoiceId={invoiceId} />}
 						{networkError && (
 							<p className="rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-800">
-								Can&apos;t reach Stellar Testnet right now. The status will update when it&apos;s back.
+								Can&apos;t load the payment status right now. It will update when the connection is back.
 							</p>
 						)}
 
@@ -128,7 +127,7 @@ export function InvoicePaymentDetails({ invoiceId }: { invoiceId: string }) {
 							Back to invoice
 						</Link>
 
-						{state.attempts.length > 1 && (
+						{state.attempts.length > 0 && (
 							<div>
 								<h4 className="mt-4 font-semibold">Payment history</h4>
 								<ul className="mt-3 divide-y divide-primary-50 rounded-xl border border-primary-50">

@@ -1,4 +1,5 @@
 "use client";
+import type { ApiErrorLike } from "@/lib/api/errors";
 import axios, { AxiosError } from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -127,7 +128,7 @@ import {
 //       toast.success('data.message');
 //       // router.push(invoiceRoutes.INVOICES);
 //     },
-//     onError: (error: any) => {
+//     onError: (error: ApiErrorLike) => {
 //       const errorMessage =
 //         error?.response?.data?.message ?? "An unknown error occurred.";
 
@@ -193,7 +194,7 @@ export const useCreateInvoice = () => {
       const id = data?.data?.id;
       router.push(id ? invoiceRoutes.PREVIEW_INVOICE({ invoice_id: id }) : invoiceRoutes.INVOICES);
     },
-    onError: (error: any) => {
+    onError: (error: ApiErrorLike) => {
       const errorMessage =
         error?.response?.data?.message ?? "An unknown error occurred.";
 
@@ -261,7 +262,7 @@ export const useUpdateInvoice = ({ invoiceId }: { invoiceId: string }) => {
       toast.success(data.message || "Invoice Updated successfully");
       router.replace(invoiceRoutes.PREVIEW_INVOICE({ invoice_id: invoiceId }));
     },
-    onError: (error: any) => {
+    onError: (error: ApiErrorLike) => {
       const errorMessage =
         error?.response?.data?.message ?? "An unknown error occurred.";
 
@@ -346,7 +347,7 @@ export const useGetInvoice = ({ invoice_id }: { invoice_id: string }) => {
   return useQuery({
     queryKey: ["invoice", invoice_id],
     queryFn: handleGetInvoice,
-    enabled: !!credentials?.access_token,
+    enabled: !!credentials?.access_token && !!invoice_id,
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -487,8 +488,8 @@ export const useReviewInvoice = (invoiceId: string, approve: boolean) => {
   const queryClient = useQueryClient();
   const toast = useToast();
   const handleSendInvoice = async () => {
-    const url = `/invoice/review/${invoiceId}?approve=${approve}`;
-    const response = await axiosInstance.get(url);
+    // The API takes the decision in the body (POST since 2026-10-22; the old GET is refused).
+    const response = await axiosInstance.post(`/invoice/review/${invoiceId}`, { approve });
     return response.data;
   };
 
@@ -606,8 +607,7 @@ export const useCreateComment = (token: string) => {
     CreateCommentPayload
   >({
     mutationFn: handleCreateComment,
-    onSuccess: (data: PaginatedCommentsResponse) => {
-      // console.log(data);
+    onSuccess: () => {
 
       queryClient.invalidateQueries({ queryKey: ["comments"] });
       toast.success("Comment Successful");
@@ -619,7 +619,7 @@ export const useCreateComment = (token: string) => {
         axios.isAxiosError(error) &&
         error?.response?.data &&
         "message" in error.response.data
-          ? (error.response.data as any).message
+          ? String((error.response.data as { message?: unknown }).message)
           : "An unknown error occurred.";
       if (error.response?.status === 401) {
         toast.error("Unauthorized Access");
@@ -639,8 +639,6 @@ export const useCreateComment = (token: string) => {
 };
 
 export const useGetComments = (invoice_id: string) => {
-  // const router = useRouter();
-  const credentials = useAuthStore((state) => state.credentials);
   // const { get } = useAxiosAuth();
   const { page, limit, sort_order } = useCommentFilter();
 

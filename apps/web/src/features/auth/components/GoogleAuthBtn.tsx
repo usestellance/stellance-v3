@@ -14,12 +14,17 @@ export default function GoogleAuthBtn() {
   const router = useRouter();
   const toast = useToast();
 
-  /** Exchanges the Google identity for a Stellance session. */
-  const signIn = async (email: string, providerId: string) => {
+  /**
+   * Exchanges the Google identity for a Stellance session. The Google access token goes along so the
+   * API can verify the identity with Google instead of trusting the email (backend gap: /auth/social
+   * currently accepts unverified emails).
+   */
+  const signIn = async (email: string, providerId: string, accessToken?: string) => {
     try {
       const res = await axiosInstance.post("/auth/social", {
         email,
         provider_id: providerId, // Google unique user id
+        ...(accessToken ? { access_token: accessToken, provider: "google" } : {}),
       });
 
       const data = res.data;
@@ -55,7 +60,7 @@ export default function GoogleAuthBtn() {
           },
         );
         const user = await userInfoRes.json(); // has `email` and `sub`
-        await signIn(user.email, user.sub);
+        await signIn(user.email, user.sub, tokenResponse.access_token);
       } catch {
         toast.error("Google authentication failed");
       }

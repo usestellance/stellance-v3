@@ -1,11 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import useAxiosAuth from "@/lib/api/use-axios-auth";
 import { useToast } from "@/lib/use-toast";
 import { useAuthStore, useLogout } from "@/features/auth/store";
 import { authRoutes } from "@/lib/routes";
-import { useTransactionFilter } from "@/features/transactions/store";
 
 export interface TransferFundsPayload {
   amount: string;
@@ -70,30 +69,6 @@ export const useGenerateWallet = () => {
 	return mutation;
 };
 
-export const useGetWallet = () => {
-	const credentials = useAuthStore((state) => state.credentials);
-	const { get } = useAxiosAuth();
-
-	const handleGetWallet = async () => {
-		// const url = `/wallet/${wallet_id}`;
-		// const url = `/wallet/971d45fb-35fd-470f-9d40-ad7d659956d9`;
-		const url = `/wallet`;
-		const res = await get(url);
-
-		// console.log(res.data);
-		// responseStatus(res.status, res.data, router);
-		return res.data.data;
-	};
-
-	return useQuery({
-		queryKey: ["wallet"],
-		queryFn: handleGetWallet,
-		enabled: !!credentials?.access_token,
-		retry: 2,
-		refetchOnWindowFocus: true,
-	});
-};
-
 // Create Pin Hook
 interface CreatePinPayload {
 	pin: string;
@@ -140,7 +115,7 @@ export const useExportWalletKeys = () => {
 
 	return useMutation({
 		mutationFn: async () => {
-			const response = await get(`/wallet/${walletId}/export`, {
+			const response = await get(`/wallet/export/${walletId}`, {
 				responseType: "blob",
 			});
 

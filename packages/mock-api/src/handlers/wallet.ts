@@ -104,7 +104,7 @@ route("POST", "/wallet/:id/pay/transfer", "user", ({ params, body, user }) => {
 });
 
 /** A one-page PDF placeholder: the mock never holds real keys. */
-route("GET", "/wallet/:id/export", "user", ({ params, user }) => {
+route("GET", "/wallet/export/:id", "user", ({ params, user }) => {
 	const wallet = myWallet(params.id!, user!.id);
 	const text = `Stellance demo wallet ${wallet.address} - mock data, no real keys`;
 	const stream = `BT /F1 10 Tf 40 780 Td (${text}) Tj ET`;
@@ -126,10 +126,11 @@ route("GET", "/transaction", "user", ({ query, user }) => {
 		.sort((a, b) => (query.get("order_by") === "asc" ? 1 : -1) * a.created_at.localeCompare(b.created_at));
 	const limit = num(query.get("size") ?? query.get("limit"), 10);
 	const page = num(query.get("page"), 1);
-	const items = list.slice((page - 1) * limit, page * limit).map(({ user_id: _u, invoice_number: _i, ...t }) => {
+	// Like the live API: incoming payments carry their invoice and no network fee.
+	const items = list.slice((page - 1) * limit, page * limit).map(({ user_id: _u, invoice_number: _i, network_fee, ...t }) => {
 		void _u;
 		void _i;
-		return t;
+		return t.transaction_type === "payment" ? t : { ...t, network_fee };
 	});
 	return ok({ data: items, page, limit, total_count: list.length });
 });
@@ -154,10 +155,10 @@ route("GET", "/transaction/stats", "user", ({ user }) => {
 		return { amount: Math.round(list.reduce((t, i) => t + i.total, 0) * 100), invoice_count: list.length };
 	};
 	return ok({
-		total_amount: sum(["sent", "viewed", "paid", "overdue", "cancelled"]),
+		total_amount: sum(["sent", "viewed", "paid", "expired", "invalid_payment", "cancelled"]),
 		pending_amount: sum(["sent", "viewed"]),
 		paid_amount: sum(["paid"]),
-		overdue_amount: sum(["overdue"]),
+		overdue_amount: sum([]),
 	});
 });
 

@@ -18,7 +18,6 @@ import { Button } from "@repo/ui/button";
 import InputField from "@repo/ui/input-field";
 import { SignUpSchema } from "@/features/auth/schema";
 import { getPasswordStrength } from "@/lib/utils";
-import { FcGoogle } from "react-icons/fc";
 import { useRegister } from "@/features/auth/hooks";
 import GoogleAuthBtn from "@/features/auth/components/GoogleAuthBtn";
 

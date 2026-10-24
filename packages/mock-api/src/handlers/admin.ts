@@ -58,7 +58,7 @@ route("GET", "/admin/stats", "admin", () => {
 		active_users: db.users.filter((u) => u.is_active).length,
 		total_invoices: db.invoices.length,
 		paid_invoices: paid.length,
-		overdue_count: db.invoices.filter((i) => i.status === "overdue").length,
+		overdue_count: 0,
 		total_revenue: round2(paid.reduce((s, i) => s + i.total, 0)),
 	});
 });
@@ -164,12 +164,16 @@ route("GET", "/admin/transactions", "admin", ({ query }) => {
 
 route("GET", "/admin/config/network", "admin", () => ok({ network: read().network }));
 
-/** Planned (docs/PLAN.md): every detected payment across merchants, for review. */
+/** Every detected payment across merchants (live since 2026-10-22): page/limit, status, search. */
 route("GET", "/admin/payments", "admin", ({ query }) => {
 	const db = read();
 	const status = query.get("status");
+	const s = query.get("search");
 	const list = db.payments
-		.filter((p) => !status || status === "all" || p.verification_status === status)
-		.map((p) => ({ ...paymentDto(p), merchant_email: db.users.find((u) => u.id === p.user_id)?.email ?? "" }));
-	return ok(page(list, query, "payments"));
+		.map((p) => ({ p, dto: paymentDto(p, db.users.find((x) => x.id === p.user_id)?.email ?? "") }))
+		.filter(({ dto }) => !status || status === "all" || dto.verification_status === status)
+		.filter(({ p }) => matches(s, p.transaction_hash, p.payment_reference ?? "", p.recipient, p.sender, p.invoice_number ?? ""))
+		.sort((a, b) => b.p.detected_at.localeCompare(a.p.detected_at))
+		.map(({ dto }) => dto);
+	return ok(page(list, query, "payments"), "payments");
 });

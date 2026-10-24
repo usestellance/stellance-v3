@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "@/lib/site";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -28,7 +29,7 @@ export default function Page() {
           <Link href={overviewRoutes.OVERVIEW}>
             <div className="w-14 lg:w-20">
               <Image
-                src="/images/logo-primary-header.svg"
+                src={withBasePath("/images/logo-primary-header.svg")}
                 alt="Stellance Logo"
                 width={100}
                 loading="eager"
@@ -61,7 +62,7 @@ export default function Page() {
           <Link href="/">
             <div className="w-14 lg:w-20">
               <Image
-                src="/images/logo-primary-header.svg"
+                src={withBasePath("/images/logo-primary-header.svg")}
                 alt="Stellance Logo"
                 width={100}
                 loading="eager"

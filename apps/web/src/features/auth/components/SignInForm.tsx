@@ -15,7 +15,6 @@ import {
 
 import { Button } from "@repo/ui/button";
 import InputField from "@repo/ui/input-field";
-import { FcGoogle } from "react-icons/fc";
 import { authRoutes } from "@/lib/routes";
 import { SignInSchema } from "@/features/auth/schema";
 import Link from "next/link";

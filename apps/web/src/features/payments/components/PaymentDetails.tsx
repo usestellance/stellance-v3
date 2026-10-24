@@ -10,7 +10,9 @@ import { CopyField } from "@/features/payments/components/CopyField";
 import { ExplorerLink } from "@/features/payments/components/ExplorerLink";
 import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
 import { VerificationChecklist } from "@/features/payments/components/VerificationChecklist";
-import { usePayment } from "@/features/payments/hooks";
+import { useGetInvoice } from "@/features/invoice/hooks";
+import type { InvoiceType } from "@/features/invoice/types";
+import { useInvoicePayment, usePayment } from "@/features/payments/hooks";
 import { formatAmount, formatDateTime, reasonCopy } from "@/features/payments/status";
 import type { DetectedPayment } from "@/features/payments/types";
 import { USDC, shortKey } from "@/lib/stellar/config";
@@ -18,7 +20,17 @@ import { invoiceRoutes, transactionsRoutes } from "@/lib/routes";
 
 /** One received payment: verified (transaction details), invalid, unmatched or failed. */
 export function PaymentDetails({ paymentId }: { paymentId: string }) {
-	const { payment, invoice, isLoading, isError } = usePayment(paymentId);
+	const { payment, isLoading, isError } = usePayment(paymentId);
+	const { data: invoiceData } = useGetInvoice({ invoice_id: payment?.invoiceId ?? "" });
+	const invoice = payment?.invoiceId ? (invoiceData as InvoiceType | undefined) : undefined;
+	const { data: request } = useInvoicePayment(payment?.invoiceId ?? undefined, { poll: false });
+	const problems = !payment
+		? []
+		: payment.reasons.length
+			? payment.reasons.map((reason) => reasonCopy(reason, payment, request?.expectation))
+			: payment.failureReason
+				? [{ title: "Not accepted", detail: payment.failureReason }]
+				: [];
 
 	return (
 		<div className="custom-container mx-auto max-w-3xl pt-5 pb-20 md:pt-10">
@@ -31,14 +43,13 @@ export function PaymentDetails({ paymentId }: { paymentId: string }) {
 				<div className="mt-8 space-y-6 md:mt-10">
 					<Header payment={payment} />
 
-					{payment.reasons.length > 0 && (
+					{problems.length > 0 && (
 						<section className="animate-rise rounded-xl border border-primary-50 p-4 sm:p-6" style={{ "--i": 1 } as React.CSSProperties}>
 							<h3 className="font-semibold">Verification result</h3>
 							<ul className="mt-4 space-y-3">
-								{payment.reasons.map((reason) => {
-									const copy = reasonCopy(reason, payment);
+								{problems.map((copy) => {
 									return (
-										<li key={reason} className="flex gap-3 rounded-lg bg-error-50 p-4">
+										<li key={copy.title} className="flex gap-3 rounded-lg bg-error-50 p-4">
 											<CircleX size={20} className="mt-0.5 shrink-0 text-error-400" />
 											<div>
 												<p className="font-medium text-error-500">{copy.title}</p>

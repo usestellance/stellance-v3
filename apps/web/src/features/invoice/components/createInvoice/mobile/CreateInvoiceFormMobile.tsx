@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- merchant logos are blob, data or remote URLs that next/image cannot optimise */
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,7 +32,6 @@ import InvoiceItemsCard from "@/features/invoice/components/createInvoice/mobile
 // import { invoiceItems } from "@/lib/utils";
 import AddInvoiceItemDrawer from "@/features/invoice/components/createInvoice/mobile/AddInvoiceItemDrawer";
 import { useRouter } from "next/navigation";
-import { invoiceRoutes } from "@/lib/routes";
 import { useToast } from "@/lib/use-toast";
 import { useCreateInvoice, useUpdateInvoice } from "@/features/invoice/hooks";
 import { Checkbox } from "@repo/ui/checkbox";
@@ -64,6 +64,8 @@ export default function CreateInvoiceFormMobile({
   const total = calculateTotal(items);
   const serviceFee = (total * SERVICE_CHARGE) / 100;
   const [make_default, setMake_default] = useState(true);
+  // The logo preview lives here, not inside the field's render callback (hooks can't run in callbacks).
+  const [preview, setPreview] = useState<string | null>(null);
   const netTotal = formatCurrency(calculateNetTotal(total, serviceFee));
 
   const form = useForm<InvoiceFormValues>({
@@ -183,7 +185,7 @@ export default function CreateInvoiceFormMobile({
       clearItems(); // ⬅️ VERY IMPORTANT
       addItems(invoice.items ?? []);
     }
-  }, [isEdit, invoice]);
+  }, [isEdit, invoice, form, clearItems, addItems]);
 
   return (
     <div className="max-w-[1200px] mx-auto">
@@ -205,7 +207,6 @@ export default function CreateInvoiceFormMobile({
               control={form.control}
               name="logo"
               render={({ field }) => {
-                const [preview, setPreview] = useState<string | null>(null);
 
                 return (
                   <FormItem className="flex flex-col items-end ">
@@ -477,7 +478,7 @@ export default function CreateInvoiceFormMobile({
             />
           </div>
 
-          <PaymentRequirements total={netTotal} invoiceNumber={invoice?.invoice_number} />
+          <PaymentRequirements total={netTotal} invoiceId={invoice?.id} />
 
           <div className="flex max-w-full gap-[30px]  justify-center mt-10 lg:mt-[60px]">
             <Button

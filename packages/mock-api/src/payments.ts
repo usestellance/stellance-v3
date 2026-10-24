@@ -39,7 +39,7 @@ function observe(scenario: Scenario, invoice: MockInvoice | null, wallet: MockWa
 		case "no_memo":
 			return { ...base, memo: null };
 		case "unknown_memo":
-			return { ...base, memo: "INV-UNKNOWN-0001" };
+			return { ...base, memo: "STL-000000000000" };
 		case "failed":
 			return { ...base, successful: false };
 		default:

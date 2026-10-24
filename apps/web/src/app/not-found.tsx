@@ -2,7 +2,6 @@
 import Logo from "@/components/Logo";
 import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
-import { overviewRoutes } from "@/lib/routes";
 
 export default function Notfound() {
   const router = useRouter();

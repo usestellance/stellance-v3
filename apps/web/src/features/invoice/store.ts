@@ -10,7 +10,9 @@ export type InvoiceStatus =
   | "overdue"
   | "viewed"
   | "cancelled"
-  | "pending";
+  | "pending"
+  | "expired"
+  | "invalid_payment";
 
 interface InvoiceFilterState {
   search: string;

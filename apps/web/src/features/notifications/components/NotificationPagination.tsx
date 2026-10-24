@@ -7,7 +7,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@repo/ui/pagination";
-import { useInvoiceFilter } from "@/features/invoice/store";
 import { useVariableStore } from "@/features/notifications/store";
 
 const NotificationPagination = ({ pageNumber }: { pageNumber: number }) => {

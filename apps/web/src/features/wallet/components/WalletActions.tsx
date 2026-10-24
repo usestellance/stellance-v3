@@ -3,7 +3,6 @@ import {
 	LucideKeyRound,
 	LucideShield,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface Props {
 	onTransferFunds: () => void;
@@ -16,7 +15,6 @@ const WalletActions = ({
 	onCreatePin,
 	onExportKeys,
 }: Props) => {
-	const router = useRouter();
 
 	const actions = [
 		{

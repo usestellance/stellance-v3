@@ -1,7 +1,7 @@
 "use client";
 
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useInvoiceItems } from "@/features/invoice/store";
 import {
@@ -47,7 +47,7 @@ export default function AddInvoiceItemDrawer({
   const toast = useToast();
 
   const form = useForm<ItemValues>({
-    resolver: zodResolver(itemSchema) as Resolver<ItemValues, any>,
+    resolver: zodResolver(itemSchema) as Resolver<ItemValues>,
     defaultValues: {
       description: "",
       quantity: 0,
@@ -64,16 +64,11 @@ export default function AddInvoiceItemDrawer({
     }
   }, [editingIndex, items, form]);
 
+  const [quantity, unit_price, discount] = useWatch({ control: form.control, name: ["quantity", "unit_price", "discount"] });
   useEffect(() => {
-    const { quantity, unit_price, discount } = form.getValues();
-    const subtotal = unit_price * quantity;
-    const discounted = subtotal * (1 - discount / 100);
+    const discounted = unit_price * quantity * (1 - discount / 100);
     form.setValue("amount", parseFloat(discounted.toFixed(2)));
-  }, [
-    form.watch("quantity"),
-    form.watch("unit_price"),
-    form.watch("discount"),
-  ]);
+  }, [quantity, unit_price, discount, form]);
 
   const onSubmit = (values: ItemValues) => {
     const amount =
@@ -83,10 +78,10 @@ export default function AddInvoiceItemDrawer({
     const payload = { ...values, amount };
 
     if (editingIndex !== null) {
-      updateItem(values); // Update the item
+      updateItem(payload); // Update the item
       toast.success("Item updated");
     } else {
-      addItem(values); // Add new item
+      addItem(payload); // Add new item
       toast.success("Item added");
     }
 

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useSyncExternalStore } from "react";
+import Cookies from "js-cookie";
 import CommentCard from "@/features/invoice/components/comments/CommentCard";
 import { Textarea } from "@repo/ui/textarea";
 import { Button } from "@repo/ui/button";
@@ -7,28 +8,32 @@ import { Comment } from "@/features/invoice/types";
 import { useSearchParams } from "next/navigation";
 
 const CommentsPreview = ({ invoice_id }: { invoice_id: string }) => {
-  const { data, error, isLoading } = useGetComments(invoice_id);
+  const { data } = useGetComments(invoice_id);
   const params = useSearchParams();
   const token = params.get("token");
-  const { mutate, isPending, isSuccess } = useCreateComment(token || "");
+  const { mutate, isPending } = useCreateComment(token || "");
   const [commentText, setCommentText] = useState("");
+  // Guests comment with the token from their invoice email; the merchant with their session.
+  const signedIn = useSyncExternalStore(
+    () => () => {},
+    () => !!Cookies.get("access_token"),
+    () => false,
+  );
+  const canComment = signedIn || !!token;
   const comments: Comment[] = data?.comments;
 
   // console.log(name, error, isLoading);
 
   const handleCreateComment = () => {
     // console.log(invoice_id)
-    mutate({
-      invoice_id,
-      comment_text: commentText,
-    });
+    mutate(
+      {
+        invoice_id,
+        comment_text: commentText,
+      },
+      { onSuccess: () => setCommentText("") },
+    );
   };
-
-  useEffect(() => {
-    if (isSuccess) {
-      setCommentText("");
-    }
-  }, [isSuccess]);
 
   return (
     <div>
@@ -45,6 +50,11 @@ const CommentsPreview = ({ invoice_id }: { invoice_id: string }) => {
         ))}
       </section>
 
+      {!canComment ? (
+        <p className="mt-[15px] sm:mt-10 rounded-[10px] bg-primary-20 p-4 text-sm text-neutral-900">
+          To comment, open this invoice from the link in your invoice email.
+        </p>
+      ) : (
       <section className="mt-[15px] sm:mt-10 flex flex-col">
         <Textarea
           className="max-h-40"
@@ -61,6 +71,7 @@ const CommentsPreview = ({ invoice_id }: { invoice_id: string }) => {
           Post
         </Button>
       </section>
+      )}
     </div>
   );
 };

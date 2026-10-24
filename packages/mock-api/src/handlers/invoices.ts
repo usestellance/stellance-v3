@@ -1,7 +1,7 @@
 import { read, update, USDC_ISSUER, type InvoiceStatus, type MockDb, type MockInvoice, type MockInvoiceItem, type MockUser } from "../db";
 import { HttpError, ok, route } from "../router";
 import { DAY, hex, iso, round2, uuid } from "../util";
-import { invoiceDto, num, ownInvoice, paymentDto } from "./present";
+import { invoiceDto, num, ownInvoice } from "./present";
 
 /** /invoice/*: CRUD (multipart, like the API), send, public view by URL, review, stats, overview. */
 
@@ -152,7 +152,14 @@ route("POST", "/invoice/:id", "user", async ({ params, body, user }) => ok(await
 route("GET", "/invoice/stats", "user", ({ user }) => {
 	const mine = read().invoices.filter((i) => i.user_id === user!.id);
 	const count = (s: InvoiceStatus[]) => mine.filter((i) => s.includes(i.status)).length;
-	return ok({ pending_count: count(["sent", "viewed"]), paid_count: count(["paid"]), overdue_count: count(["overdue"]), total_count: mine.length });
+	return ok({
+		pending_count: count(["sent", "viewed"]),
+		paid_count: count(["paid"]),
+		overdue_count: 0,
+		expired_count: count(["expired"]),
+		invalid_payment_count: count(["invalid_payment"]),
+		total_count: mine.length,
+	});
 });
 
 route("GET", "/invoice/overview", "user", ({ query, user }) => {
@@ -180,17 +187,24 @@ route("GET", "/invoice/search", "public", ({ query }) => {
 			const invoice = db.invoices.find((i) => (url ? i.invoice_url === url : i.id === id));
 			if (!invoice || invoice.status === "draft") throw new HttpError(404, "invoice not found");
 			if (invoice.status === "sent") invoice.status = "viewed";
-			return invoiceDto(db, invoice);
+			const dto = invoiceDto(db, invoice);
+			if (dto.createdBy) {
+				const { email: _email, phone_number: _phone, ...publicOwner } = dto.createdBy;
+				void [_email, _phone];
+				return { ...dto, createdBy: publicOwner };
+			}
+			return dto;
 		}),
 	);
 });
 
-route("GET", "/invoice/review/:id", "public", ({ params, query }) => {
-	const approve = query.get("approve") === "true";
+route("POST", "/invoice/review/:id", "public", ({ params, body }) => {
+	if (typeof body.approve !== "boolean") throw new HttpError(400, "approve must be true or false");
+	const approve = body.approve;
 	return ok(
 		update((db) => {
 			const invoice = db.invoices.find((i) => i.id === params.id);
-			if (!invoice) throw new HttpError(404, "invoice not found");
+			if (!invoice || invoice.status === "paid") throw new HttpError(404, "Invoice not found, or either has already been paid for. Thus, cannot be reviewed");
 			invoice.approved = approve;
 			invoice.review_date = iso(Date.now());
 			db.notifications.unshift({
@@ -245,13 +259,12 @@ route("DELETE", "/invoice/:id", "user", ({ params, user }) => {
 	return ok(null, "Invoice deleted successfully");
 });
 
-/** The PRD forbids marking paid without on-chain verification; the planned API refuses it too. */
-route("PATCH", "/invoice/:id/mark-paid", "user", () => {
-	throw new HttpError(409, "invoices are marked paid only after their Stellar payment is verified");
+/** The API verifies the hash on chain; in the demo only a payment the mock has recorded would pass. */
+route("PATCH", "/invoice/:id/mark-paid", "user", ({ params, body, user }) => {
+	const db = read();
+	ownInvoice(db, params.id!, user);
+	const known = db.payments.some((p) => p.transaction_hash === body.transaction_hash && p.invoice_id === params.id && p.verification_status === "verified");
+	if (!known) throw new HttpError(404, "transaction not found on Stellar");
+	return ok(null, "invoice marked as paid");
 });
 
-/** Planned (docs/PLAN.md): an invoice's payment attempts. Public, like the payment page. */
-route("GET", "/invoice/:id/payments", "public", ({ params }) => {
-	const db = read();
-	return ok(db.payments.filter((p) => p.invoice_id === params.id).map(paymentDto));
-});

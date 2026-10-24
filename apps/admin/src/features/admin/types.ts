@@ -50,7 +50,7 @@ export interface AdminInvoice {
 	payer_email: string;
 	total: number;
 	currency: string;
-	status: "draft" | "sent" | "viewed" | "paid" | "overdue" | "cancelled";
+	status: "draft" | "sent" | "viewed" | "paid" | "expired" | "invalid_payment" | "overdue" | "cancelled";
 	created_at: string;
 }
 
@@ -71,24 +71,28 @@ export interface AdminUserDetail {
 	recent_transactions: AdminTransaction[];
 }
 
-/** Planned (docs/PLAN.md): a detected payment and its verification result. */
+/** A detected payment and its verdict (GET /admin/payments, live since 2026-10-22). */
 export interface AdminPayment {
 	id: string;
+	invoice_id?: string | null;
 	transaction_hash: string;
+	explorer_url?: string | null;
 	sender: string;
 	recipient: string;
-	asset_code: string;
-	asset_issuer: string | null;
-	amount: number;
+	invoice_number?: string | null;
+	merchant_email?: string | null;
+	asset_code?: string;
+	asset_issuer?: string | null;
+	/** Before 2026-10-24: "CODE:ISSUER", or "XLM". */
+	asset?: string;
+	amount: string | number;
 	payment_reference: string | null;
-	transaction_successful: boolean;
-	verification_status: "detected" | "verified" | "invalid" | "unmatched" | "failed";
-	reasons: string[];
-	invoice_id: string | null;
-	invoice_number: string | null;
+	verification_status: "pending" | "detected" | "verified" | "invalid" | "unmatched" | "failed";
+	failure_code?: string | null;
+	failure_reason?: string | null;
+	ledger_closed_at?: string;
 	detected_at: string;
-	verified_at: string | null;
-	merchant_email: string;
+	verified_at?: string | null;
 }
 
 export type Paged<K extends string, T> = { [key in K]: T[] } & { meta: PageMeta };

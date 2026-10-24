@@ -1,13 +1,12 @@
 "use client";
+import { withBasePath } from "@/lib/site";
 import Image from "next/image";
 import React from "react";
 import { Button } from "@repo/ui/button";
 import { useGenerateWallet } from "@/features/wallet/hooks";
-import { useWalletStore } from "@/features/wallet/store";
 import { useAuthStore } from "@/features/auth/store";
 import { authRoutes } from "@/lib/routes";
 import { useRouter } from "next/navigation";
-import { IWallet } from "@/features/wallet/types";
 
 const NoWalletAddress = () => {
   const router = useRouter();
@@ -28,7 +27,7 @@ const NoWalletAddress = () => {
       <div className="flex flex-col items-center mt-[108px]">
         <div className="w-full max-w-[300px] md:max-w-[500px]">
           <Image
-            src="/images/no-wallet-address.svg"
+            src={withBasePath("/images/no-wallet-address.svg")}
             alt="No wallet illustration"
             height={500}
             width={500}

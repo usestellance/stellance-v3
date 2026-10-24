@@ -6,7 +6,7 @@ import { ArrowDownToLine } from "lucide-react";
 import { useState } from "react";
 import { TransactionsTabs } from "@/features/transactions/components/TransactionsTabs";
 import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
-import { useMerchantPayments } from "@/features/payments/hooks";
+import { useMerchantPayments, useMerchantWallet } from "@/features/payments/hooks";
 import { formatAmount, formatDateTime } from "@/features/payments/status";
 import type { VerificationStatus } from "@/features/payments/types";
 import { shortKey } from "@/lib/stellar/config";
@@ -22,7 +22,8 @@ const FILTERS: { value: VerificationStatus | "all"; label: string }[] = [
 
 /** Every payment received to the merchant's wallet, with its verification result. */
 export function IncomingPayments() {
-	const { payments, isLoading, isError, wallet } = useMerchantPayments({ poll: true });
+	const wallet = useMerchantWallet();
+	const { payments, isLoading, isError } = useMerchantPayments({ poll: true });
 	const [filter, setFilter] = useState<VerificationStatus | "all">("all");
 	const shown = filter === "all" ? payments : payments.filter((p) => p.status === filter);
 	const needsReview = payments.filter((p) => p.status === "invalid" || p.status === "unmatched").length;
@@ -66,10 +67,10 @@ export function IncomingPayments() {
 						Create a <Link href={walletRoutes.WALLET} className="underline underline-offset-4">wallet</Link> to receive invoice payments.
 					</p>
 				)}
-				{wallet && isLoading && <p className="mt-16 animate-pulse text-center text-neutral-900">Checking Stellar Testnet…</p>}
+				{wallet && isLoading && <p className="mt-16 animate-pulse text-center text-neutral-900">Loading payments…</p>}
 				{wallet && isError && (
 					<p className="mt-10 rounded-lg bg-warning-50 p-4 text-center text-sm text-warning-800">
-						Can&apos;t reach Stellar Testnet right now. Retrying automatically.
+						Can&apos;t load payments right now. Retrying automatically.
 					</p>
 				)}
 				{wallet && !isLoading && shown.length === 0 && (
@@ -90,7 +91,7 @@ export function IncomingPayments() {
 								</div>
 								<div className="min-w-0">
 									<h4 className="text-base leading-tight font-semibold text-primary-600 lg:text-lg">
-										{payment.invoiceNumber ?? "No matching invoice"}
+										{payment.status === "failed" ? "Failed transaction" : payment.invoiceId ? "Invoice payment" : "No matching invoice"}
 									</h4>
 									<p className="mt-1 text-sm text-neutral-900">{formatDateTime(payment.detectedAt)}</p>
 									<p className="mt-2 truncate font-mono text-xs text-neutral-900">
@@ -99,8 +100,8 @@ export function IncomingPayments() {
 								</div>
 							</div>
 							<div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-2">
-								<p className="text-lg font-bold whitespace-nowrap sm:text-xl lg:text-2xl">
-									+{formatAmount(payment.amount)} {payment.asset.code}
+								<p className={clsx("text-lg font-bold whitespace-nowrap sm:text-xl lg:text-2xl", payment.status === "failed" && "text-neutral-900 line-through")}>
+									{payment.status === "failed" ? "" : "+"}{formatAmount(payment.amount)} {payment.asset.code}
 								</p>
 								<PaymentStatusBadge verification={payment.status} />
 							</div>

@@ -8,7 +8,11 @@ export type StatusType =
   | "overdue"
   | "viewed"
   | "cancelled"
-  | "pending";
+  | "pending"
+  | "expired"
+  | "invalid_payment"
+  | "awaiting_payment"
+  | "payment_detected";
 
 type UserRole = "freelancer" | "client";
 
@@ -31,6 +35,10 @@ const statusStyles: Record<
     viewed: "bg-primary-600",
     overdue: "bg-error-300",
     pending: "bg-warning-500",
+    expired: "bg-neutral-900",
+    invalid_payment: "bg-error-400",
+    awaiting_payment: "bg-warning-500",
+    payment_detected: "bg-info-400",
   },
   outlined: {
     draft: "border border-info-300 text-info-500",
@@ -40,6 +48,10 @@ const statusStyles: Record<
     viewed: "border border-primary-600 text-primary-600",
     overdue: "border border-error-400 text-error-300",
     pending: "border border-warning-500 text-warning-600",
+    expired: "border border-neutral-900 text-neutral-900",
+    invalid_payment: "border border-error-400 text-error-500",
+    awaiting_payment: "border border-warning-500 text-warning-600",
+    payment_detected: "border border-info-400 text-info-500",
   },
 };
 
@@ -59,6 +71,13 @@ const statusLabelMap: Record<
   },
 };
 
+/** Statuses whose API value isn't a readable word on its own. */
+const LABELS: Partial<Record<StatusType, string>> = {
+  invalid_payment: "Invalid payment",
+  awaiting_payment: "Awaiting payment",
+  payment_detected: "Payment detected",
+};
+
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
   role,
@@ -76,13 +95,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   }`;
 
   const style =
-    variant === "filled"
+    (variant === "filled"
       ? statusStyles.filled[displayStatus]
-      : statusStyles.outlined[displayStatus];
+      : statusStyles.outlined[displayStatus]) ?? statusStyles[variant].draft;
 
   return (
     <span className={clsx(baseStyles, style, className)}>
-      {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+      {LABELS[displayStatus] ?? displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
     </span>
   );
 };

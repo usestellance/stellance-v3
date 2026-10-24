@@ -50,7 +50,7 @@ export interface MockInvoiceItem {
 	created_at: string;
 }
 
-export type InvoiceStatus = "draft" | "sent" | "viewed" | "paid" | "overdue" | "cancelled";
+export type InvoiceStatus = "draft" | "sent" | "viewed" | "paid" | "expired" | "invalid_payment" | "cancelled";
 
 export interface MockInvoice {
 	id: string;
@@ -75,7 +75,7 @@ export interface MockInvoice {
 	template_id: string;
 	logo_url: string | null;
 	note: string;
-	// Payment requirements (proposed contract, docs/PLAN.md D1).
+	// What the mock serves on /payments/request (the live API keeps these on its payment record).
 	payment_reference: string;
 	payment_asset_code: string;
 	payment_asset_issuer: string;
@@ -116,8 +116,10 @@ export interface MockTransaction {
 	created_at: string;
 	confirmed_at: string;
 	token_type: string;
-	transaction_type: "funding" | "withdrawal" | "transfer";
+	/** `payment` = money received (invoice payments included); `funding` = the wallet's initial XLM. */
+	transaction_type: "funding" | "payment" | "withdrawal" | "transfer";
 	invoice_number: string;
+	invoice_id?: string;
 }
 
 export type VerificationStatus = "detected" | "verified" | "invalid" | "unmatched" | "failed";
@@ -172,7 +174,7 @@ export interface MockDb {
 }
 
 const KEY = "stellance-mock-db";
-const VERSION = 3;
+const VERSION = 4;
 
 let memory: MockDb | null = null;
 

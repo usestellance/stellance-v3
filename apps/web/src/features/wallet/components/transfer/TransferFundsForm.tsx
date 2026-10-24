@@ -18,15 +18,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@repo/ui/select";
-import {
-	InputOTP,
-	InputOTPGroup,
-	InputOTPSlot,
-} from "@repo/ui/input-otp";
-import {
-	TransferFundsFormValues,
-	transferFundsSchema,
-} from "@/features/wallet/schema";
+import { TransferFundsFormValues, transferFundsSchema } from "@/features/wallet/schema";
 
 interface Props {
 	onSubmit: (values: TransferFundsFormValues) => void | Promise<void>;

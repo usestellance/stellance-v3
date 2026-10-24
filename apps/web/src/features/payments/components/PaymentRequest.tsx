@@ -9,27 +9,30 @@ import { PaymentQr } from "@/features/payments/components/PaymentQr";
 import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
 import { PaymentSimulator } from "@/features/payments/components/PaymentSimulator";
 import { PaymentStatusPanel } from "@/features/payments/components/PaymentStatusPanel";
-import { useInvoicePayment } from "@/features/payments/hooks";
+import { paymentUri } from "@/features/payments/api";
+import { usePaymentRequest } from "@/features/payments/hooks";
 import { formatAmount } from "@/features/payments/status";
-import { paymentUri } from "@/features/payments/verify";
 import { formatDate } from "@/lib/helpers";
 import { USDC, shortKey } from "@/lib/stellar/config";
 
 /**
  * The customer's payment page: how much, in what, to which wallet, with which memo, and a live status
- * once they've paid. Amount and memo come first, because a payment without the memo can't be matched.
+ * once they've paid. Everything comes from the API's payment request, so the memo shown is the exact
+ * reference it matches payments on.
  */
 export function PaymentRequest({ invoice }: { invoice: InvoiceType }) {
-	const { state, expectation, updatedAt } = useInvoicePayment(invoice);
+	const { data: state, dataUpdatedAt: updatedAt, isLoading, isError } = usePaymentRequest(invoice.invoice_url);
 
-	if (!expectation || !state) {
+	if (isLoading) return <p className="mt-16 animate-pulse text-center text-neutral-900">Loading payment details…</p>;
+	if (isError || !state || !state.expectation.recipient) {
 		return (
 			<p className="mx-auto mt-16 max-w-md rounded-xl bg-warning-50 p-5 text-center text-sm text-warning-800">
-				This invoice can&apos;t take payments yet: the business hasn&apos;t set up a receiving wallet. Please contact them.
+				This invoice can&apos;t take payments right now. Please contact the business that sent it.
 			</p>
 		);
 	}
 
+	const expectation = state.expectation;
 	const closed = state.status === "paid" || state.status === "cancelled" || state.status === "expired";
 	const uri = paymentUri(expectation);
 
@@ -46,7 +49,7 @@ export function PaymentRequest({ invoice }: { invoice: InvoiceType }) {
 					</div>
 					<dl className="space-y-2 p-6 text-sm sm:text-base">
 						<Row label="Invoice reference" value={invoice.invoice_number ?? ""} />
-						<Row label="Asset" value={USDC.label} />
+						<Row label="Asset" value={`${expectation.asset.code} (Testnet)`} />
 						<Row label="Invoice date" value={formatDate(invoice.created_at || "")} />
 						<Row label="Due date" value={formatDate(invoice.due_date || "")} />
 						{invoice.createdBy?.business_name && <Row label="Billed by" value={invoice.createdBy.business_name} />}
@@ -80,7 +83,7 @@ export function PaymentRequest({ invoice }: { invoice: InvoiceType }) {
 							}
 						/>
 						<p className="text-xs text-neutral-900">
-							Send exactly {formatAmount(expectation.amount)} {expectation.asset.code} issued by {shortKey(USDC.issuer)}. Other assets or
+							Send exactly {formatAmount(expectation.amount)} {expectation.asset.code} issued by {shortKey(expectation.asset.issuer ?? USDC.issuer)}. Other assets or
 							smaller amounts won&apos;t be accepted.
 						</p>
 

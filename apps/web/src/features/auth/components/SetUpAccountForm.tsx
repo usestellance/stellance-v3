@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 
 import {
   Form,
@@ -17,12 +16,9 @@ import {
 import { Button } from "@repo/ui/button";
 import InputField from "@repo/ui/input-field";
 // import { useRouter } from "next/navigation";
-import { useToast } from "@/lib/use-toast";
 import { SetUpAccountSchema } from "@/features/auth/schema";
 import { Combobox } from "@repo/ui/combobox";
 import { countryCodes } from "@/lib/countries";
-import { authRoutes } from "@/lib/routes";
-import { useRouter } from "next/navigation";
 import { useCompleteProfile } from "@/features/auth/hooks";
 
 type SetUpAccountValues = z.infer<typeof SetUpAccountSchema>;

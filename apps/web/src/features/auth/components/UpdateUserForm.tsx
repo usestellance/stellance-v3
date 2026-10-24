@@ -3,8 +3,7 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import {
   Form,
@@ -17,11 +16,9 @@ import {
 
 import { Button } from "@repo/ui/button";
 import InputField from "@repo/ui/input-field";
-import { useToast } from "@/lib/use-toast";
 import { UpdateUserSchema } from "@/features/auth/schema";
 import { Combobox } from "@repo/ui/combobox";
-import { countryCodes, CURRENCIES } from "@/lib/countries";
-import { authRoutes } from "@/lib/routes";
+import { countryCodes } from "@/lib/countries";
 import ChangePasswordDialog from "@/features/auth/components/ChangePasswordDialog";
 import { maskMiddle } from "@/lib/helpers";
 import { useUpdateProfile } from "@/features/auth/hooks";
@@ -34,14 +31,6 @@ const countryOptions = countryCodes.map((country) => ({
   label: country.country,
   code: country.code,
   abb: country.abb,
-}));
-const currencyOptions = CURRENCIES.map((currency) => ({
-  value: currency.code,
-  label: currency.name,
-  code: currency.code,
-  name: currency.name,
-  symbol: currency.symbol,
-  subunit: currency.subunit, // kobo
 }));
 
 export default function UpdateUserForm() {

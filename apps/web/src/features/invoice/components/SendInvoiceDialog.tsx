@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, KeyboardEvent, useEffect } from "react";
+import React, { useState, useRef, KeyboardEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -43,16 +43,8 @@ const SendInvoiceDialog = ({
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // The payer's email arrives with the invoice; the preview remounts this dialog (key) when it does.
   const trimmedEmails = emails.filter((e) => e !== "");
-
-  console.log(defaultEmail, trimmedEmails);
-
-  useEffect(() => {
-    if (defaultEmail) {
-      const unify = [...new Set([defaultEmail, ...trimmedEmails])];
-      setEmails(unify);
-    }
-  }, [defaultEmail]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

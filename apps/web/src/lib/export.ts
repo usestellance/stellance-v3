@@ -50,7 +50,8 @@ export const exportToPDF = (invoices: Invoice[], filename = "receipts.pdf") => {
 
   // Add summary
   const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
-  const finalY = (doc as any).lastAutoTable.finalY || 42;
+  // jspdf-autotable records where the table ended on the document.
+  const finalY = (doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 42;
 
   doc.setFontSize(11);
   doc.text(`Total Amount: $${totalAmount?.toFixed(2)}`, 14, finalY + 10);

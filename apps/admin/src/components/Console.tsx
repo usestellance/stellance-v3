@@ -65,13 +65,26 @@ const TONES = {
 export type Tone = keyof typeof TONES;
 
 export function Pill({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {
-	return <span className={clsx("inline-flex h-6 items-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap capitalize", TONES[tone])}>{children}</span>;
+	return <span className={clsx("inline-flex h-6 items-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap capitalize", TONES[tone])}>
+			{typeof children === "string" ? children.replace(/_/g, " ") : children}
+		</span>;
 }
 
 /** One mapping per status family, so every table colours them the same way. */
-export const INVOICE_TONE: Record<string, Tone> = { draft: "muted", sent: "info", viewed: "neutral", paid: "success", overdue: "danger", cancelled: "muted" };
+export const INVOICE_TONE: Record<string, Tone> = {
+	draft: "muted",
+	sent: "info",
+	viewed: "neutral",
+	awaiting_payment: "warning",
+	payment_detected: "info",
+	paid: "success",
+	invalid_payment: "danger",
+	expired: "muted",
+	overdue: "danger",
+	cancelled: "muted",
+};
 export const TX_TONE: Record<string, Tone> = { confirmed: "success", pending: "warning", failed: "danger" };
-export const PAYMENT_TONE: Record<string, Tone> = { detected: "info", verified: "success", invalid: "danger", unmatched: "warning", failed: "danger" };
+export const PAYMENT_TONE: Record<string, Tone> = { pending: "info", detected: "info", verified: "success", invalid: "danger", unmatched: "warning", failed: "danger" };
 
 export interface Column<T> {
 	key: string;

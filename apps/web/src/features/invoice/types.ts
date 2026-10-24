@@ -38,16 +38,9 @@ export interface InvoiceType {
   service_fee?: number;
   created_at?: string;
   updated_at?: string;
+  paid_at?: string | null;
   invoice_items?: InvoiceItemsTypes[];
   items?: InvoiceItemsTypes[];
-  // Payment requirements (docs/PLAN.md, D1). The API doesn't return these yet; features/payments/api.ts
-  // falls back to the invoice number, the total and the merchant's wallet until it does.
-  payment_reference?: string;
-  payment_recipient?: string;
-  payment_asset_code?: string;
-  payment_asset_issuer?: string | null;
-  payment_amount?: number;
-  payment_expires_at?: string;
   createdBy?: {
     business_name: string;
     wallet_address: string;

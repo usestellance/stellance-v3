@@ -20,3 +20,12 @@ export const shortKey = (value: string, head = 6, tail = 5) =>
 export const titleCase = (value: string) => value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
 export const explorerTx = (hash: string) => `https://stellar.expert/explorer/testnet/tx/${hash}`;
+
+/** A payment's asset code: `asset_code`, or the older "USDC:G…" `asset`; "native" is XLM. */
+export const assetCode = (p: { asset_code?: string; asset?: string }) => {
+	const code = p.asset_code ?? p.asset?.split(":")[0] ?? "";
+	return code === "native" ? "XLM" : code;
+};
+
+export const formatAmount = (amount: string | number) =>
+	new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 7 }).format(Number(amount));

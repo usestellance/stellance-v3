@@ -99,7 +99,7 @@ const NotificationList = () => {
         <div className="text-center py-12 mt-20">
           <p className="text-lg md:text-2xl">No notifications yet</p>
           <p className="text-sm mt-2 md:text-base text-neutral-900">
-            We'll notify you when something important happens
+            We&apos;ll notify you when something important happens
           </p>
         </div>
       )}

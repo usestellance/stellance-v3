@@ -1,15 +1,7 @@
+import type { ApiErrorLike } from "@/lib/api/errors";
 import { useToast } from "@/lib/use-toast";
 import { useExportWalletKeys } from "@/features/wallet/hooks";
-import {
-	AlertDialog,
-	AlertDialogContent,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogCancel,
-	AlertDialogAction,
-} from "@repo/ui/alert-dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@repo/ui/alert-dialog";
 
 interface Props {
 	open: boolean;
@@ -29,7 +21,8 @@ const ExportKeysDialog = ({ open, onOpenChange }: Props) => {
 			if (exportKeys.isSuccess) {
 				onOpenChange(false);
 			}
-		} catch (error: any) {
+		} catch (caught) {
+			const error = caught as ApiErrorLike;
 			toast.error(
 				error?.response?.data?.message ?? "Failed to export wallet keys.",
 			);

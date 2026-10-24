@@ -1,3 +1,4 @@
+import type { ApiErrorLike } from "@/lib/api/errors";
 import {
 	Dialog,
 	DialogContent,
@@ -31,7 +32,8 @@ const TransferFundsDialog = ({ open, onOpenChange }: Props) => {
 			await transferFunds.mutateAsync(values);
 			toast.success("Transfer completed successfully.");
 			onOpenChange(false);
-		} catch (error: any) {
+		} catch (caught) {
+			const error = caught as ApiErrorLike;
 			toast.error(
 				error?.response?.data?.message ??
 					error?.message ??

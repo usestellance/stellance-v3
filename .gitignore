@@ -24,6 +24,7 @@ coverage
 # Build Outputs
 .next/
 .next-verify/
+.next-live/
 out/
 build
 dist

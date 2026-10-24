@@ -209,6 +209,7 @@ export default function Page() {
 
       {/* ✅ Send Invoice Dialog */}
       <SendInvoiceDialog
+        key={invoice?.payer_email ?? "loading"}
         open={openSendDialog}
         onOpenChange={setOpenSendDialog}
         onSend={handleSendInvoice}

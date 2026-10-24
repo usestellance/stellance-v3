@@ -68,7 +68,7 @@ export function ChartPieInteractive() {
   const currentMonthIndex = new Date().getMonth();
   const currentMonth = months[currentMonthIndex];
   const [activeMonth, setActiveMonth] = React.useState<string>(currentMonth);
-  const [activeStatus, setActiveStatus] = React.useState<string>();
+  const [selectedStatus, setActiveStatus] = React.useState<string>();
 
   const { data, isPending } = useGetInvoiceOverview(activeMonth);
 
@@ -102,7 +102,7 @@ export function ChartPieInteractive() {
     };
 
     chartData.forEach(
-      (item: { status: string | number; label: any; fill: any }) => {
+      (item: { status: string | number; label: string; fill: string }) => {
         config[item.status] = {
           label: item.label,
           color: item.fill,
@@ -114,13 +114,9 @@ export function ChartPieInteractive() {
   }, [chartData]);
 
   /* ---------------------------------- */
-  /* Active slice logic (safe) */
+  /* Active slice: the one picked, else the first */
   /* ---------------------------------- */
-  React.useEffect(() => {
-    if (!activeStatus && chartData.length) {
-      setActiveStatus(chartData[0].status);
-    }
-  }, [chartData, activeStatus]);
+  const activeStatus: string | undefined = selectedStatus ?? chartData[0]?.status;
 
   const activeIndex = React.useMemo(() => {
     return (

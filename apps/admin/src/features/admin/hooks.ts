@@ -72,11 +72,10 @@ export const useTransactions = (page: number, search: string, limit = 20) =>
 		placeholderData: keepPreviousData,
 	});
 
-/** Planned endpoint: a 404 from the live API means "not built yet", not an error to retry. */
-export const usePayments = (page: number, status: string, limit = 20) =>
+export const usePayments = (page: number, status: string, limit = 20, search = "") =>
 	useQuery({
-		queryKey: ["admin", "payments", page, status, limit],
-		queryFn: () => getData<Paged<"payments", AdminPayment>>(`/admin/payments${qs({ page, limit, status })}`),
+		queryKey: ["admin", "payments", page, status, limit, search],
+		queryFn: () => getData<Paged<"payments", AdminPayment>>(`/admin/payments${qs({ page, limit, status, search })}`),
 		placeholderData: keepPreviousData,
 		retry: false,
 	});

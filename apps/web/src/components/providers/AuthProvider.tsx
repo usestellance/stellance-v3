@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { authRoutes } from "@/lib/routes";
@@ -20,11 +20,11 @@ export default function AuthProvider({
   const setCredentials = useAuthStore((state) => state.setCredentials);
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
-  const [isInitialized, setIsInitialized] = useState(false);
+  // initializeAuth() reads the session cookie into the store and sets its isInitialized flag.
+  const isInitialized = useAuthStore((state) => state.isInitialized);
 
   useEffect(() => {
     initializeAuth();
-    setIsInitialized(true);
   }, []);
 
   const accessToken = Cookies.get("access_token");

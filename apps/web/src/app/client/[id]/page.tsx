@@ -1,4 +1,5 @@
 "use client";
+import { withBasePath } from "@/lib/site";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
@@ -13,7 +14,6 @@ import Template03 from "@/features/invoice/components/templates/Template03";
 import Template04 from "@/features/invoice/components/templates/Template04";
 import Template05 from "@/features/invoice/components/templates/Template05";
 import Template01 from "@/features/invoice/components/templates/Template01";
-import PageLoading from "@/components/PageLoading";
 import { StatusBadge } from "@/components/InvoiceStatusBadge";
 import { getDueStatus } from "@/lib/helpers";
 import { Button } from "@repo/ui/button";
@@ -73,7 +73,7 @@ export default function Page() {
           <Link href={overviewRoutes.OVERVIEW} className="mb-10 inline-block">
             <div className="w-14 lg:w-20">
               <Image
-                src="/images/logo-primary-header.svg"
+                src={withBasePath("/images/logo-primary-header.svg")}
                 alt="Stellance Logo"
                 width={100}
                 loading="eager"
@@ -90,7 +90,7 @@ export default function Page() {
           <Link href="/">
             <div className="w-14 lg:w-20">
               <Image
-                src="/images/logo-primary-header.svg"
+                src={withBasePath("/images/logo-primary-header.svg")}
                 alt="Stellance Logo"
                 width={100}
                 loading="eager"
@@ -123,7 +123,7 @@ export default function Page() {
           <Link href="/">
             <div className="w-14 lg:w-20">
               <Image
-                src="/images/logo-primary-header.svg"
+                src={withBasePath("/images/logo-primary-header.svg")}
                 alt="Stellance Logo"
                 width={100}
                 loading="eager"

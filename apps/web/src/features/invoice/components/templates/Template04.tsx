@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element -- merchant logos are blob, data or remote URLs that next/image cannot optimise */
+import { withBasePath } from "@/lib/site";
 import Logo from "@/components/Logo";
 import {
   capitalizeWords,
@@ -33,7 +35,7 @@ const Template04 = ({ invoice }: { invoice: InvoiceType }) => {
             className={`w-[45px] h-[35px] sm:h-[50px] sm:w-[60px] lg:w-20 lg:h-[70px] rounded-[3.35px] ${!invoice?.logo_url && "bg-primary-50"}`}
           >
             <img
-              src={invoice?.logo_url || "/images/logo-primary.svg"}
+              src={invoice?.logo_url || withBasePath("/images/logo-primary.svg")}
               alt={invoice?.title || ""}
               className="h-full w-full object-contain"
             />

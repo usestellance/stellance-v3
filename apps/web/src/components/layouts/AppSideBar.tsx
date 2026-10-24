@@ -7,30 +7,13 @@
 //   Search,
 // } from "lucide-react";
 
-import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
-	SidebarTrigger,
-	useSidebar, // Import this hook
-} from "@repo/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@repo/ui/sidebar";
 import Logo from "@/components/Logo";
-import {
-	invoiceRoutes,
-	overviewRoutes,
-	receiptRoutes,
-	transactionsRoutes,
-	walletRoutes,
-} from "@/lib/routes";
+import { invoiceRoutes, overviewRoutes, transactionsRoutes, walletRoutes } from "@/lib/routes";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useLogout } from "@/features/auth/store";
 import { GoQuestion } from "react-icons/go";
-import { useToast } from "@/lib/use-toast";
 
 const overview = (
 	<svg

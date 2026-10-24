@@ -2,7 +2,10 @@
 import { Copy } from "lucide-react";
 import { useParams } from "next/navigation";
 import GoBack from "@/components/GoBack";
+import Link from "next/link";
 import { ExplorerLink } from "@/features/payments/components/ExplorerLink";
+import { formatTokenAmount, isIncoming } from "@/features/transactions/types";
+import { invoiceRoutes } from "@/lib/routes";
 import { useToast } from "@/lib/use-toast";
 import { useGetTransaction } from "@/features/transactions/hooks";
 
@@ -51,17 +54,24 @@ const TransactionPreview = () => {
 				<div className="space-y-5">
 					<Detail label="Transaction ID" value={data.id} />
 
-					<Detail label="Transaction Type" value={data.transaction_type} />
+					<Detail label="Transaction Type" value={isIncoming(data) ? `${data.transaction_type} (received)` : data.transaction_type} />
 
-					<Detail
-						label="Amount"
-						value={`${data.amount} ${data.currency.toUpperCase()}`}
-					/>
+					<Detail label="Amount" value={formatTokenAmount(data.amount, data.currency)} />
 
-					<Detail
-						label="Network Fee"
-						value={`${data.network_fee} ${data.currency.toUpperCase()}`}
-					/>
+					{data.network_fee != null && (
+						<Detail
+							label="Network Fee"
+							value={`${data.network_fee} ${data.currency.toUpperCase()}`}
+						/>
+					)}
+
+					{data.invoice_id && (
+						<div className="flex justify-end">
+							<Link href={invoiceRoutes.PAYMENT_DETAILS(data.invoice_id)} className="text-sm font-medium text-primary-500 underline underline-offset-4">
+								View the invoice this paid
+							</Link>
+						</div>
+					)}
 
 					<Detail label="Currency" value={data.currency.toUpperCase()} />
 

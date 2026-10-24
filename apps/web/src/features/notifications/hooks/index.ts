@@ -71,8 +71,7 @@ export const useUpdateNotification = () => {
     // CreateCommentPayload
   >({
     mutationFn: handleUpdateNotification,
-    onSuccess: (data: NotificationsItem) => {
-      //   console.log(data);
+    onSuccess: () => {
 
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       toast.info("Notification read");
@@ -84,7 +83,7 @@ export const useUpdateNotification = () => {
         axios.isAxiosError(error) &&
         error?.response?.data &&
         "message" in error.response.data
-          ? (error.response.data as any).message
+          ? String((error.response.data as { message?: unknown }).message)
           : "An unknown error occurred.";
       if (error.response?.status === 401) {
         toast.error("Unauthorized Access");
@@ -115,8 +114,6 @@ export const useDeleteNotification = () => {
   // Define the function to handle the registration API call
 
   const handleDeleteNotification = async (notificationId?: string) => {
-    const params = new URLSearchParams();
-
     const url = `/notification/${notificationId}`;
 
     const res = await patch(url);
@@ -132,8 +129,7 @@ export const useDeleteNotification = () => {
     // CreateCommentPayload
   >({
     mutationFn: handleDeleteNotification,
-    onSuccess: (data: NotificationsItem) => {
-      //   console.log(data);
+    onSuccess: () => {
 
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       toast.info("Notification Deleted");
@@ -145,7 +141,7 @@ export const useDeleteNotification = () => {
         axios.isAxiosError(error) &&
         error?.response?.data &&
         "message" in error.response.data
-          ? (error.response.data as any).message
+          ? String((error.response.data as { message?: unknown }).message)
           : "An unknown error occurred.";
       if (error.response?.status === 401) {
         toast.error("Unauthorized Access");

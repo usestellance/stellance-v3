@@ -1,87 +1,122 @@
-import { read, update, type MockDb } from "../db";
+import { read, update, type MockDb, type MockPayment } from "../db";
 import { SCENARIOS, buildPayment, type Scenario } from "../payments";
 import { HttpError, ok, route } from "../router";
-import { hex, iso, round2, uuid } from "../util";
-import { num, paymentDto, primaryWallet } from "./present";
+import { iso, round2, uuid } from "../util";
+import { num, ownInvoice, paymentDto, paymentRequestDto, primaryWallet } from "./present";
 
 /**
- * The planned detection endpoints (docs/PLAN.md, D2) and the demo's payment simulator. A simulated
- * payment is "detected" for a few seconds, then gets its result; a valid one marks the invoice paid a
- * moment later, the way the backend will (detect → verify → match → mark paid).
+ * The live payment endpoints (payments-v2, 2026-10-21) and the demo's payment simulator. A simulated
+ * payment shows as pending for a few seconds, then gets its verdict; a valid one marks the invoice paid,
+ * like the API does (detect → verify → match → mark paid).
  */
 
 const DETECT_MS = 4_000;
-const MARK_PAID_MS = 3_000;
+
+/** What a settled payment does to the merchant's data, as the live API does it. */
+function applyVerdict(db: MockDb, p: MockPayment, at: number) {
+	const wallet = db.wallets.find((w) => w.address === p.recipient);
+	const invoice = p.invoice_id ? db.invoices.find((i) => i.id === p.invoice_id) : undefined;
+
+	// Every payment that reached the wallet is in the ledger as `payment`; a failed one is recorded as failed.
+	db.transactions.unshift({
+		id: uuid(),
+		user_id: p.user_id,
+		wallet_id: wallet?.id ?? "",
+		transaction_hash: p.transaction_hash,
+		amount: p.amount,
+		currency: p.asset_code === "XLM" ? "xlm" : "usdc",
+		status: p.transaction_successful ? "confirmed" : "failed",
+		network_fee: 0,
+		created_at: iso(at),
+		confirmed_at: p.detected_at,
+		token_type: p.asset_code === "XLM" ? "native" : "usdc",
+		transaction_type: "payment",
+		invoice_number: p.invoice_number ?? "",
+		invoice_id: p.invoice_id ?? undefined,
+	});
+	if (wallet && p.transaction_successful) {
+		if (p.asset_code === "XLM") wallet.xlm = round2(wallet.xlm + p.amount);
+		else wallet.usdc = round2(wallet.usdc + p.amount);
+	}
+
+	if (invoice && invoice.status !== "paid" && invoice.status !== "cancelled") {
+		if (p.verification_status === "verified") {
+			invoice.status = "paid";
+			invoice.updated_at = iso(at);
+		} else if (p.verification_status === "invalid" || p.verification_status === "failed") {
+			invoice.status = "invalid_payment";
+			invoice.updated_at = iso(at);
+		}
+	}
+
+	if (p.verification_status === "verified") {
+		db.notifications.unshift({
+			id: uuid(),
+			user_id: p.user_id,
+			title: "Invoice Paid",
+			body: `Payment for invoice ${p.invoice_number} was verified on Stellar. Tx: ${p.transaction_hash}`,
+			viewed: false,
+			created_at: iso(at),
+		});
+	}
+}
 
 /** Resolves simulated payments whose time has come. Runs before every mock request. */
 export function settlePayments() {
 	const now = Date.now();
-	const db = read();
-	const due = db.payments.some(
-		(p) => (p.settles_at && p.settles_at <= now) || (p.invoice_paid_at && p.invoice_paid_at <= now),
-	);
-	if (!due) return;
+	if (!read().payments.some((p) => p.settles_at && p.settles_at <= now)) return;
 	update((d) => {
 		for (const p of d.payments) {
-			if (p.settles_at && p.settles_at <= now) {
-				p.verification_status = p.resolves_to ?? p.verification_status;
-				p.verified_at = p.verification_status === "verified" ? iso(p.settles_at) : null;
-				delete p.settles_at;
-				notify(d, p.user_id, p.verification_status, p.invoice_number);
-			}
-			if (p.invoice_paid_at && p.invoice_paid_at <= now) {
-				const invoice = d.invoices.find((i) => i.id === p.invoice_id);
-				if (invoice && invoice.status !== "paid" && invoice.status !== "cancelled") {
-					invoice.status = "paid";
-					invoice.updated_at = iso(p.invoice_paid_at);
-					const wallet = d.wallets.find((w) => w.address === p.recipient);
-					if (wallet) wallet.usdc = round2(wallet.usdc + p.amount);
-					d.transactions.unshift({
-						id: uuid(),
-						user_id: p.user_id,
-						wallet_id: wallet?.id ?? "",
-						transaction_hash: p.transaction_hash,
-						amount: p.amount,
-						currency: "usdc",
-						status: "confirmed",
-						network_fee: 0.00001,
-						created_at: p.detected_at,
-						confirmed_at: iso(p.invoice_paid_at),
-						token_type: "credit_alphanum4",
-						transaction_type: "funding",
-						invoice_number: invoice.invoice_number,
-					});
-				}
-				delete p.invoice_paid_at;
-			}
+			if (!p.settles_at || p.settles_at > now) continue;
+			p.verification_status = p.resolves_to ?? p.verification_status;
+			p.verified_at = p.verification_status === "verified" ? iso(p.settles_at) : null;
+			delete p.settles_at;
+			applyVerdict(d, p, now);
 		}
 	});
 }
 
-function notify(db: MockDb, userId: string, status: string, invoiceNumber: string | null) {
-	const copy: Record<string, [string, string]> = {
-		verified: ["Payment verified", `Payment for ${invoiceNumber} was verified on Stellar.`],
-		invalid: ["Payment needs review", `A payment for ${invoiceNumber} didn't meet the invoice requirements. The invoice stays unpaid.`],
-		unmatched: ["Unmatched payment", "A payment arrived without a matching invoice reference."],
-		failed: ["Payment failed", `A transaction for ${invoiceNumber ?? "an invoice"} failed on Stellar.`],
-	};
-	const [title, body] = copy[status] ?? [];
-	if (title) db.notifications.unshift({ id: uuid(), user_id: userId, title, body: body!, viewed: false, created_at: iso(Date.now()) });
-}
-
-route("GET", "/payment", "user", ({ query, user }) => {
+/** GET /payments: `{ payments, meta }`, `page` + `limit` (default 20, max 100), optional `status`. */
+route("GET", "/payments", "user", ({ query, user }) => {
 	const status = query.get("status");
-	const list = read().payments.filter((p) => p.user_id === user!.id && (!status || status === "all" || p.verification_status === status));
-	const limit = num(query.get("size") ?? query.get("limit"), 100);
-	const pages = Math.max(1, Math.ceil(list.length / limit));
-	const page = Math.min(num(query.get("page"), 1), pages);
-	return ok({ payments: list.slice((page - 1) * limit, page * limit).map(paymentDto), meta: { page, limit, total: list.length, total_pages: pages } });
+	const list = read()
+		.payments.filter((p) => p.user_id === user!.id)
+		.filter((p) => !status || paymentDto(p).verification_status === status)
+		.sort((a, b) => b.detected_at.localeCompare(a.detected_at));
+	const limit = Math.min(num(query.get("limit"), 20), 100);
+	const total_pages = Math.max(1, Math.ceil(list.length / limit));
+	const page = Math.min(num(query.get("page"), 1), total_pages);
+	return ok(
+		{ payments: list.slice((page - 1) * limit, page * limit).map((p) => paymentDto(p)), meta: { page, limit, total: list.length, total_pages } },
+		"payments",
+	);
 });
 
-route("GET", "/payment/:id", "user", ({ params, user }) => {
+route("GET", "/payments/:id", "user", ({ params, user }) => {
 	const payment = read().payments.find((p) => p.id === params.id && p.user_id === user!.id);
 	if (!payment) throw new HttpError(404, "payment not found");
-	return ok(paymentDto(payment));
+	return ok(paymentDto(payment), "payment");
+});
+
+route("GET", "/payments/invoice/:id", "user", ({ params, user }) => {
+	const db = read();
+	return ok(paymentRequestDto(db, ownInvoice(db, params.id!, user), true), "payment details");
+});
+
+route("GET", "/payments/request/:url", "public", ({ params }) => {
+	const db = read();
+	const invoice = db.invoices.find((i) => i.invoice_url === params.url);
+	if (!invoice) throw new HttpError(404, "invoice not found");
+	return ok(paymentRequestDto(db, invoice, false), "payment request");
+});
+
+route("POST", "/payments/verify", "user", ({ body, user }) => {
+	const hash = String(body.transaction_hash ?? "").trim();
+	if (!hash) throw new HttpError(400, "Transaction Hash is required; ");
+	if (hash.length !== 64) throw new HttpError(400, "Transaction Hash must be exactly 64 characters long; ");
+	const found = read().payments.filter((p) => p.transaction_hash === hash && p.user_id === user!.id);
+	if (!found.length) throw new HttpError(404, "transaction not found on Stellar");
+	return ok(found.map((p) => paymentDto(p)), "transaction checked");
 });
 
 /**
@@ -101,19 +136,17 @@ route("POST", "/mock/payments/simulate", "public", ({ body }) => {
 				db.payments.filter((p) => (p.resolves_to ?? p.verification_status) === "verified" && p.invoice_id).map((p) => p.invoice_id!),
 			);
 			if (invoice.status === "paid") settled.add(invoice.id);
-			const now = Date.now();
-			const rand = () => parseInt(hex(8), 16) / 0xffffffff;
+			const rand = () => Math.random();
 			const payment = buildPayment({
 				scenario,
 				invoice,
 				invoices: db.invoices.filter((i) => i.user_id === invoice.user_id),
 				wallet,
-				at: now,
+				at: Date.now(),
 				rand,
 				settledInvoiceIds: settled,
 				settleAfterMs: DETECT_MS,
 			});
-			if (payment.resolves_to === "verified") payment.invoice_paid_at = now + DETECT_MS + MARK_PAID_MS;
 			db.payments.unshift(payment);
 			return paymentDto(payment);
 		}),
@@ -121,4 +154,3 @@ route("POST", "/mock/payments/simulate", "public", ({ body }) => {
 		201,
 	);
 });
-

@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element -- merchant logos are blob, data or remote URLs that next/image cannot optimise */
+import { withBasePath } from "@/lib/site";
 import React from "react";
 import Logo from "@/components/Logo";
 import {
@@ -8,7 +10,6 @@ import {
 } from "@/lib/helpers";
 import { SERVICE_CHARGE } from "@/lib/constants";
 import { InvoiceType } from "@/features/invoice/types";
-import Image from "next/image";
 import { overviewRoutes } from "@/lib/routes";
 
 const Template03 = ({ invoice }: { invoice: InvoiceType }) => {
@@ -58,7 +59,7 @@ const Template03 = ({ invoice }: { invoice: InvoiceType }) => {
             className={`w-[45px] h-[35px] sm:h-[50px] sm:w-[60px] lg:w-20 lg:h-[70px] rounded-[3.35px] ${!invoice?.logo_url && "bg-primary-50"}`}
           >
             <img
-              src={invoice?.logo_url || "/images/logo-primary.svg"}
+              src={invoice?.logo_url || withBasePath("/images/logo-primary.svg")}
               alt={invoice?.title || ""}
               className="h-full w-full object-contain"
             />

@@ -1,3 +1,4 @@
+import type { ApiErrorLike } from "@/lib/api/errors";
 import {
 	Dialog,
 	DialogContent,
@@ -40,7 +41,8 @@ const CreatePinDialog = ({ open, onOpenChange }: Props) => {
 			toast.success("Wallet PIN created successfully.");
 
 			onOpenChange(false);
-		} catch (error: any) {
+		} catch (caught) {
+			const error = caught as ApiErrorLike;
 			console.log(error);
 			toast.error(error?.response?.data?.message ?? "Unable to create PIN.");
 		}

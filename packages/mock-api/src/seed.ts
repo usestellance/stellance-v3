@@ -166,7 +166,7 @@ export function buildSeed(version: number): MockDb {
 			template_id: `template_00${(sequence % 5) + 1}`,
 			logo_url: null,
 			note: "Thank you for your business. Please include the payment reference as the memo.",
-			payment_reference: number,
+			payment_reference: `STL-${hex(12, rand).toUpperCase()}`,
 			payment_asset_code: "USDC",
 			payment_asset_issuer: USDC_ISSUER,
 			payment_amount: total,
@@ -181,18 +181,18 @@ export function buildSeed(version: number): MockDb {
 	const paid2 = addInvoice(demo, "paid", 74, 14, 1, [2]);
 	const paid3 = addInvoice(demo, "paid", 45, 10, 2, [3, 4]);
 	const paid4 = addInvoice(demo, "paid", 12, 14, 3, [6]);
-	const insufficient = addInvoice(demo, "viewed", 9, 12, 4, [5, 7]);
-	const wrongAsset = addInvoice(demo, "sent", 7, 14, 5, [1]);
+	const insufficient = addInvoice(demo, "invalid_payment", 9, 12, 4, [5, 7]);
+	const wrongAsset = addInvoice(demo, "invalid_payment", 7, 14, 5, [1]);
 	const awaiting = addInvoice(demo, "sent", 2, 14, 6, [8, 9]);
 	addInvoice(demo, "viewed", 4, 10, 7, [7]);
-	const overdueFailed = addInvoice(demo, "overdue", 40, 14, 1, [9]);
-	addInvoice(demo, "overdue", 33, 7, 2, [4, 8]);
+	const overdueFailed = addInvoice(demo, "invalid_payment", 40, 14, 1, [9]);
+	addInvoice(demo, "expired", 33, 7, 2, [4, 8]);
 	addInvoice(demo, "draft", 1, 14, 3, [0]);
 	addInvoice(demo, "draft", 0, 21, 4, [2, 5]);
 	addInvoice(demo, "cancelled", 60, 14, 5, [3]);
 
 	// Other merchants (admin console).
-	const statuses: InvoiceStatus[] = ["paid", "sent", "viewed", "overdue", "draft", "cancelled", "paid"];
+	const statuses: InvoiceStatus[] = ["paid", "sent", "viewed", "expired", "draft", "cancelled", "paid"];
 	users
 		.filter((u) => u.role === "user" && u.id !== demo.id && u.profile_complete)
 		.forEach((u, i) => {
@@ -244,7 +244,7 @@ export function buildSeed(version: number): MockDb {
 			invoice_number: "",
 		});
 	}
-	for (const p of payments.filter((p) => p.verification_status === "verified" || (p.verification_status === "invalid" && p.transaction_successful))) {
+	for (const p of payments) {
 		transactions.push({
 			id: uuid(rand),
 			user_id: demo.id,
@@ -252,14 +252,16 @@ export function buildSeed(version: number): MockDb {
 			transaction_hash: p.transaction_hash,
 			amount: p.amount,
 			currency: p.asset_code === "XLM" ? "xlm" : "usdc",
-			status: "confirmed",
-			network_fee: 0.00001,
+			status: p.transaction_successful ? "confirmed" : "failed",
+			network_fee: 0,
 			created_at: p.detected_at,
 			confirmed_at: p.detected_at,
-			token_type: p.asset_code === "XLM" ? "native" : "credit_alphanum4",
-			transaction_type: "funding",
+			token_type: p.asset_code === "XLM" ? "native" : "usdc",
+			transaction_type: "payment",
 			invoice_number: p.invoice_number ?? "",
+			invoice_id: p.invoice_id ?? undefined,
 		});
+		if (!p.transaction_successful) continue;
 		if (p.asset_code === "XLM") demoWallet.xlm += p.amount;
 		else demoWallet.usdc = round2(demoWallet.usdc + p.amount);
 	}
@@ -301,14 +303,14 @@ export function buildSeed(version: number): MockDb {
 	}));
 
 	const notifications: MockNotification[] = [
-		["Payment verified", `Payment for ${paid4.invoice_number} was verified on Stellar and the invoice is marked paid.`, 11, false],
+		["Invoice Paid", `Payment for invoice ${paid4.invoice_number} was verified on Stellar.`, 11, false],
 		["Payment needs review", `A payment for ${insufficient.invoice_number} was smaller than the invoice amount. The invoice stays unpaid.`, 7, false],
 		["Payment needs review", `A payment for ${wrongAsset.invoice_number} used the wrong asset (XLM instead of USDC).`, 6, false],
 		["Unmatched payment", "A payment arrived without a matching invoice reference. Review it under Transactions → Invoice payments.", 2, false],
 		["Invoice Review Update", `${insufficient.payer_name} approved ${insufficient.invoice_number}.`, 8, true],
 		["Invoice sent", `${awaiting.invoice_number} was sent to ${awaiting.payer_email}.`, 2, true],
-		["Invoice overdue", `${overdueFailed.invoice_number} is past its due date.`, 25, true],
-		["Payment verified", `Payment for ${paid3.invoice_number} was verified on Stellar.`, 43, true],
+		["Invoice expired", `The payment window for ${overdueFailed.invoice_number} has closed.`, 25, true],
+		["Invoice Paid", `Payment for invoice ${paid3.invoice_number} was verified on Stellar.`, 43, true],
 	].map(([title, body, days, viewed]) => ({
 		id: uuid(rand),
 		user_id: demo.id,

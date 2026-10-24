@@ -3,12 +3,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { axiosInstance } from "@/lib/api/client";
-import {
-  authRoutes,
-  backendRoutes,
-  overviewRoutes,
-  walletRoutes,
-} from "@/lib/routes";
+import { authRoutes, backendRoutes, overviewRoutes } from "@/lib/routes";
 import { useToast } from "@/lib/use-toast";
 import {
   ILoginResponse,

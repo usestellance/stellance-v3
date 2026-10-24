@@ -180,7 +180,7 @@ import { useGetInvoices } from "@/features/invoice/hooks";
 // ];
 
 const LatestInvoices = () => {
-  const { data, isLoading, isError, error } = useGetInvoices({});
+  const { data, isLoading, isError } = useGetInvoices({});
 
   // console.log("Latest Invoices Data:", data);
 
