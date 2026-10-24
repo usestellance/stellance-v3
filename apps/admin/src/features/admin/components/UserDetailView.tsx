@@ -103,7 +103,7 @@ export function UserDetailView({ id }: { id: string }) {
 							</dl>
 						</Panel>
 						<Panel title="Wallets" index={2}>
-							{data.wallets.length === 0 ? (
+							{!data.wallets?.length ? (
 								<p className="text-sm text-neutral-900">No wallet yet.</p>
 							) : (
 								<ul className="space-y-3">

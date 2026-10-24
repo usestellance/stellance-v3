@@ -59,16 +59,17 @@ export interface AdminTransaction {
 	invoice_number: string;
 	user_email: string;
 	amount: number;
-	type: "funding" | "withdrawal" | "transfer";
+	type: "funding" | "payment" | "withdrawal" | "transfer";
 	status: "confirmed" | "pending" | "failed";
 	created_at: string;
 }
 
+/** The API sends `null` rather than `[]` for a user with no wallet or transactions yet. */
 export interface AdminUserDetail {
 	user: AdminUser;
-	wallets: AdminWallet[];
-	recent_activity: AdminActivity[];
-	recent_transactions: AdminTransaction[];
+	wallets: AdminWallet[] | null;
+	recent_activity: AdminActivity[] | null;
+	recent_transactions: AdminTransaction[] | null;
 }
 
 /** A detected payment and its verdict (GET /admin/payments, live since 2026-10-22). */

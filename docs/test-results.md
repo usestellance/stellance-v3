@@ -168,3 +168,22 @@ Mock smoke run of the payment flow (compiled `@repo/mock-api`, calling the adapt
 | `POST /payments/verify`: known hash returns records, unknown hash 404; `mark-paid` with a fake hash 404 | pass |
 | `POST /invoice/review/{id} {approve}`; public invoice hides merchant email and phone; `/wallet/export/{id}` | pass |
 | `GET /admin/payments` `{payments, meta}` with search | pass |
+
+## 7. Live retest after the fixes (2026-10-24)
+
+Live builds of web and admin against `api.usestellance.com`, merchant `tlayefaah@gmail.com`, client `stellardev002@gmail.com`.
+
+- UI flow: sign in → create INV-20261024-0021 (1.03 USDC) → send to stellardev002 → client approves → client pay page
+  shows the backend's reference `STL-46E9C0E51D38`. Comments are gated for a signed-out visitor without the email link.
+- Paid on Testnet from a throwaway account with that reference:
+  [`b42c92ea…`](https://stellar.expert/explorer/testnet/tx/b42c92eab23aa740bb6e548ef6795f005a54fa80febbd3b645fc9a077a15c3a0).
+  The API went `awaiting_payment` → `paid` / `verified` within about 10 s; the invoice preview, payment details, payments
+  list, wallet activity, notifications, client pay page (desktop and phone, no overflow) and admin all show it. 0 API errors.
+- The API changed on 2026-10-24: `GET /payments` returns `{ payments, meta }` (page/limit), `GET /payments/{id}` exists,
+  and records carry `asset_code` + `asset_issuer` (no `asset`), `failure_code`, `checks`, `expected`, `invoice_number`
+  (admin adds `merchant_email`); amounts have 7 decimals. Before the fix the app would have shown every live payment
+  as XLM, and the admin payments pages crashed. Both fixed; the mock serves the new shapes.
+- Admin user detail crashed for users without a wallet: the API sends `wallets: null` and `recent_transactions: null`.
+  Fixed in the app; the API should return `[]`.
+- Backend: `/transaction/stats` still returns `overdue_amount` (always 0 now) and has no amounts for expired or
+  invalid-payment invoices, so the overview's Overdue card can't show anything useful.
