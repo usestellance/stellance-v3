@@ -19,10 +19,10 @@ invoice (recipient, asset code + issuer, amount, `STL-…` memo reference, tx su
 sends an "Invoice Paid" notification. Proven end to end on INV-20261023-0020 (paid about 11 s after the payment). Gaps
 still on the backend side are listed in the backend-gaps document and `docs/test-results.md` §4.
 
-**Frontend: wired to payments-v2, still on demo data by default.** The payment screens read the endpoints below (the
-client no longer reads Horizon or derives references), and `@repo/mock-api` serves the same shapes, so
-`NEXT_PUBLIC_API_SOURCE=live` is the only switch. "Simulate a Testnet payment" on the payment pages plays the customer
-and the network in demo mode. `pnpm check-types`, `pnpm lint` (0 errors, 0 warnings) and all three builds pass.
+**Frontend: wired to payments-v2 and connected to the live API by default (2026-10-25).** The payment screens read the
+endpoints below (the client no longer reads Horizon or derives references). `@repo/mock-api` serves the same shapes
+for demos: `NEXT_PUBLIC_API_SOURCE=mock` switches to it, and there "Simulate a Testnet payment" plays the customer and
+the network. `pnpm check-types`, `pnpm lint` (0 errors, 0 warnings) and all three builds pass.
 
 ### Backend contract (live, captured 2026-10-22)
 

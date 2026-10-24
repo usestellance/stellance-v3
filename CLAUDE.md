@@ -48,9 +48,9 @@ jspdf (+ autotable) and xlsx for exports, `qrcode`, `@react-oauth/google`, gsap 
 
 ## Data
 
-- **Source switch** (`lib/api/source.ts` in web and admin): `NEXT_PUBLIC_API_SOURCE=mock` (the default for now) answers
-  every request in the browser from `@repo/mock-api` (installed as an axios `adapter`, loaded only in mock mode); `live`
-  calls the API. Same URLs, envelopes and error shapes either way, so hooks never know. Demo accounts:
+- **Source switch** (`lib/api/source.ts` in web and admin): the apps call the live API by default (since 2026-10-25).
+  `NEXT_PUBLIC_API_SOURCE=mock` instead answers every request in the browser from `@repo/mock-api` (installed as an
+  axios `adapter`, loaded only in mock mode). Same URLs, envelopes and error shapes either way, so hooks never know. Demo accounts:
   `demo@usestellance.com` / `Password1` (merchant), `admin@usestellance.com` / `Password1` (admin). The mock DB is one
   JSON document in localStorage (`stellance-mock-db`); "Reset demo data" on the sign-in page restores the seed. Seed
   dates are relative to the first run. Shape mock data like the live responses (captured shapes in `docs/test-results.md`).
