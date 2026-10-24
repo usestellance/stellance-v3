@@ -114,7 +114,8 @@ route("POST", "/invoice", "user", async ({ body, user }) => {
 			template_id: String(body.template_id || "template_001"),
 			logo_url: logo ?? null,
 			note: String(body.note ?? ""),
-			payment_reference: number,
+			// Like the API: a unique STL- memo reference, not the invoice number.
+			payment_reference: `STL-${hex(12).toUpperCase()}`,
 			payment_asset_code: "USDC",
 			payment_asset_issuer: USDC_ISSUER,
 			payment_amount: amounts.total,

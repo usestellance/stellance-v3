@@ -40,3 +40,6 @@ dev-server.log
 *.pem
 *.tsbuildinfo
 
+
+# /brag video renders (large media)
+brag-output*/

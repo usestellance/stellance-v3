@@ -380,7 +380,11 @@ export const useGetInvoiceForClient = ({
   return useQuery({
     queryKey: ["client_invoice", invoice_url],
     queryFn: handleGetInvoiceForClient,
-    retry: 2,
+    // A missing or unsent invoice is a 404: show it straight away instead of retrying.
+    retry: (count, error) => {
+      const status = (error as ApiErrorLike)?.response?.status ?? 0;
+      return count < 2 && !(status >= 400 && status < 500);
+    },
     refetchOnWindowFocus: false,
   });
 };
