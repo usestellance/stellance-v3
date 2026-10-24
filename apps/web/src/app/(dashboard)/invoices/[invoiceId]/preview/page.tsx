@@ -102,11 +102,14 @@ export default function Page() {
                 role="freelancer"
               />
 
-              <div className="bg-orange-500 text-neutral-500 font-bold text-sm md:text-base px-[15px] py-1 md:px-[26.5px] md:py-1 rounded-[20px]">
-                {invoice?.status === "cancelled"
-                  ? "No due date"
-                  : getDueStatus(invoice?.due_date || "No due date")}
-              </div>
+              {/* A settled invoice has no due date to count down to. */}
+              {invoice?.status !== "paid" && invoice?.status !== "refunded" && (
+                <div className="bg-orange-500 text-neutral-500 font-bold text-sm md:text-base px-[15px] py-1 md:px-[26.5px] md:py-1 rounded-[20px]">
+                  {invoice?.status === "cancelled"
+                    ? "No due date"
+                    : getDueStatus(invoice?.due_date || "No due date")}
+                </div>
+              )}
             </div>
             <section className="mt-8 flex justify-between sm:text-lg font-semibold">
               <h3 className="">{invoice?.invoice_number}</h3>

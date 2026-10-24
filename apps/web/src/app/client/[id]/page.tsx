@@ -140,11 +140,14 @@ export default function Page() {
                 role="client"
               />
 
-              <div className="bg-orange-500 text-neutral-500 font-bold text-sm md:text-base px-[15px] py-1 md:px-[26.5px] md:py-1 rounded-[20px]">
-                {invoice?.status === "cancelled"
-                  ? "No due date"
-                  : getDueStatus(invoice?.due_date || "No due date")}
-              </div>
+              {/* A settled invoice has no due date to count down to. */}
+              {invoice?.status !== "paid" && invoice?.status !== "refunded" && (
+                <div className="bg-orange-500 text-neutral-500 font-bold text-sm md:text-base px-[15px] py-1 md:px-[26.5px] md:py-1 rounded-[20px]">
+                  {invoice?.status === "cancelled"
+                    ? "No due date"
+                    : getDueStatus(invoice?.due_date || "No due date")}
+                </div>
+              )}
             </section>
             {!isError && !isLoading && (
               <div className="flex justify-center my-[30px] lg:my-[60px]">
@@ -177,7 +180,8 @@ export default function Page() {
             )}
             {isPayer && (
               <section className="mt-10 sm:mt-16 lg:mt-[60px]">
-                {invoice?.status === "sent" && (
+                {/* Opening the link marks the invoice viewed, so review stays open until the payer has answered. */}
+                {(invoice?.status === "sent" || invoice?.status === "viewed") && !invoice?.review_date && (
                   <div className="flex gap-[30px] justify-center">
                     <Button
                       onClick={() => handleReviewInvoice(false)}

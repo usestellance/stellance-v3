@@ -33,7 +33,7 @@ const Hero = () => {
   return (
     <div ref={scope} className="min-h-[75vh] sm:min-h-screen relative pt-28 sm:pt-40 pb-10">
       <div className="landing-container flex justify-between h-full gap-20">
-        <div className="w-full xl:w-1/2 flex flex-col justify-center text-neutral-500">
+        <div className="w-full lg:w-1/2 flex flex-col justify-center text-neutral-500">
           <p
             data-hero-pill
             className="mb-5 w-fit max-sm:mx-auto rounded-full border border-neutral-500/30 bg-neutral-500/10 px-4 py-1.5 text-xs font-medium sm:text-sm"
@@ -80,7 +80,7 @@ const Hero = () => {
           height={500}
           className="h-full w-full object-contain"
         />
-        <PaymentStatusDemo className="absolute top-[18%] -left-24 xl:-left-16" />
+        <PaymentStatusDemo className="absolute top-[18%] -left-6 xl:-left-16" />
       </div>
     </div>
   );

@@ -27,7 +27,9 @@ export function InvoicePaymentSummary({ invoice }: { invoice: InvoiceType }) {
 			<div className="flex items-center gap-3">
 				<div className="text-right">
 					<PaymentStatusBadge status={state.status} />
-					<p className="mt-1 hidden text-xs text-neutral-900 sm:block">{PAYMENT_STATUS[state.status].title}</p>
+					{PAYMENT_STATUS[state.status].title !== PAYMENT_STATUS[state.status].label && (
+						<p className="mt-1 hidden text-xs text-neutral-900 sm:block">{PAYMENT_STATUS[state.status].title}</p>
+					)}
 				</div>
 				<span className="flex items-center gap-1 text-sm font-medium text-primary-500">
 					Payment details <ChevronRight size={16} />

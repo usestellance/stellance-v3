@@ -223,7 +223,7 @@ export default function CreateInvoiceFormDesktop({
                             preview ? "bg-transparent" : "bg-primary-20"
                           }`}
                         >
-                          {isEdit && !preview ? (
+                          {isEdit && !preview && invoice?.logo_url ? (
                             <img
                               src={invoice?.logo_url}
                               alt="logo"

@@ -83,7 +83,7 @@ const TransactionPreview = () => {
 						<p className="text-sm text-neutral-900 mb-2">Transaction Hash</p>
 
 						<div className="flex items-center justify-between gap-3 rounded-lg bg-primary-50 px-4 py-3">
-							<p className="truncate text-sm text-neutral-500">
+							<p className="truncate font-mono text-sm text-black-500">
 								{data.transaction_hash}
 							</p>
 

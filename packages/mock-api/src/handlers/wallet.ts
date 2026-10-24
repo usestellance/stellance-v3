@@ -148,7 +148,8 @@ route("GET", "/transaction", "user", ({ query, user }) => {
 route("GET", "/transaction/id/:id", "user", ({ params, user }) => {
 	const tx = read().transactions.find((t) => t.id === params.id && t.user_id === user!.id);
 	if (!tx) throw new HttpError(404, "transaction not found");
-	return ok(tx);
+	const { network_fee, ...rest } = tx;
+	return ok(tx.transaction_type === "payment" || tx.transaction_type === "path_payment" ? rest : { ...rest, network_fee });
 });
 
 route("GET", "/transaction/status/:id", "user", ({ params, user }) => {

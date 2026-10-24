@@ -258,7 +258,9 @@ export const useUpdateInvoice = ({ invoiceId }: { invoiceId: string }) => {
   return useMutation({
     mutationFn: handleCreateInvoice,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["invoice", "invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice", invoiceId] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice-payment", invoiceId] });
       toast.success(data.message || "Invoice Updated successfully");
       router.replace(invoiceRoutes.PREVIEW_INVOICE({ invoice_id: invoiceId }));
     },
@@ -395,7 +397,6 @@ export const useSendInvoice = (invoiceId: string) => {
     const response = await post(`/invoice/send/${invoiceId}`, {
       emails: emails,
     });
-    console.log(response);
     return response.data;
   };
 
@@ -409,8 +410,10 @@ export const useSendInvoice = (invoiceId: string) => {
     onSuccess: (data: InvoiceResponseType) => {
       toast.success(data.message);
 
-      queryClient.invalidateQueries({ queryKey: ["invoice", "invoices"] });
-      window.location.reload();
+      // Refresh in place (a reload would swallow the toast): the status badge, list and payment strip.
+      for (const key of ["invoice", "invoices", "invoice-payment", "notifications"]) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
     },
     onError: (error) => {
       const errorMessage =

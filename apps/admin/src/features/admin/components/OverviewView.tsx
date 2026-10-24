@@ -27,7 +27,8 @@ export function OverviewView() {
 				<StatCard index={1} label="Active users" value={s?.active_users} format={formatNumber} />
 				<StatCard index={2} label="Invoices" value={s?.total_invoices} format={formatNumber} />
 				<StatCard index={3} label="Paid invoices" value={s?.paid_invoices} format={formatNumber} hint={paidRate !== undefined ? `${paidRate}% of all invoices` : undefined} tone="success" />
-				<StatCard index={4} label="Overdue" value={s?.overdue_count} format={formatNumber} tone="danger" />
+				{/* The API no longer produces overdue invoices; payments that failed verification are what needs attention. */}
+				<StatCard index={4} label="Needs review" value={needsReview?.length} format={formatNumber} hint="Invalid or unmatched payments" tone="danger" />
 				<StatCard index={5} label="Paid volume" value={s?.total_revenue} format={(n) => formatUsdc(n)} hint="Testnet USDC" />
 			</div>
 

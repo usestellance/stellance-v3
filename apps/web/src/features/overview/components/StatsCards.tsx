@@ -17,11 +17,12 @@ const Card = ({
 }) => {
   return (
     <div
-      className="animate-rise h-[110px] sm:h-[140px] w-full border-[0.5px] border-primary-500/15 bg-neutral-500 rounded-[5px] shadow-lg shadow-[#8392cd]/30 px-2.5 py-3 flex flex-col gap-2.5 sm:justify-between sm:py-5 sm:rounded-[10px] sm:px-3 hover:-translate-y-1 duration-150"
+      className="@container animate-rise h-[110px] sm:h-[140px] w-full border-[0.5px] border-primary-500/15 bg-neutral-500 rounded-[5px] shadow-lg shadow-[#8392cd]/30 px-2.5 py-3 flex flex-col gap-2.5 sm:justify-between sm:py-5 sm:rounded-[10px] sm:px-3 hover:-translate-y-1 duration-150"
       style={{ "--i": index } as React.CSSProperties}
     >
       <h6 className="text-[10px] sm:text-sm">{title.toUpperCase()}</h6>
-      <p className="tracking-wider fontmedium text-xl sm:text-[26px] text-primary-500 line-clamp-1">
+      {/* Sized to the card, not the screen: four cards beside the sidebar get narrow on small laptops. */}
+      <p className="tracking-wider fontmedium text-lg @[190px]:text-xl @[230px]:text-[22px] @[270px]:text-[26px] text-primary-500 truncate">
         <AnimatedNumber value={amount} format={formatCentsToDollars} />
       </p>
       <div className="rounded-[20px] bg-primary-50 text-[10px] sm:text-xs font-medium w-fit py-0.5 px-3 ">
