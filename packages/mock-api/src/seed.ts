@@ -277,8 +277,10 @@ export function buildSeed(version: number): MockDb {
 		created_at: iso(ago(20)),
 		confirmed_at: iso(ago(20)),
 		token_type: "credit_alphanum4",
-		transaction_type: "transfer",
+		transaction_type: "path_payment",
 		invoice_number: "",
+		source_amount: "500.000000",
+		source_asset: "USDC",
 	});
 	demoWallet.usdc = round2(demoWallet.usdc - 500);
 	transactions.sort((a, b) => b.created_at.localeCompare(a.created_at));

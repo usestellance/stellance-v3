@@ -96,13 +96,16 @@ route("GET", "/notification", "user", ({ query, user }) => {
 	const mine = read()
 		.notifications.filter((n) => n.user_id === user!.id)
 		.sort((a, b) => (query.get("order_by") === "ASC" ? 1 : -1) * a.created_at.localeCompare(b.created_at));
-	const count = num(query.get("count"), 10);
+	const count = num(query.get("limit") ?? query.get("count"), 10);
 	const total_pages = Math.max(1, Math.ceil(mine.length / count));
 	const page = Math.min(num(query.get("page"), 1), total_pages);
 	return ok({
+		items: mine.slice((page - 1) * count, page * count),
 		notifications: mine.slice((page - 1) * count, page * count),
 		meta: {
 			page,
+			limit: count,
+			total: mine.length,
 			page_count: mine.length,
 			unread_count: mine.filter((n) => !n.viewed).length,
 			read_count: mine.filter((n) => n.viewed).length,

@@ -12,7 +12,8 @@ export type StatusType =
   | "expired"
   | "invalid_payment"
   | "awaiting_payment"
-  | "payment_detected";
+  | "payment_detected"
+  | "refunded";
 
 type UserRole = "freelancer" | "client";
 
@@ -39,6 +40,7 @@ const statusStyles: Record<
     invalid_payment: "bg-error-400",
     awaiting_payment: "bg-warning-500",
     payment_detected: "bg-info-400",
+    refunded: "bg-neutral-900",
   },
   outlined: {
     draft: "border border-info-300 text-info-500",
@@ -52,6 +54,7 @@ const statusStyles: Record<
     invalid_payment: "border border-error-400 text-error-500",
     awaiting_payment: "border border-warning-500 text-warning-600",
     payment_detected: "border border-info-400 text-info-500",
+    refunded: "border border-neutral-900 text-neutral-900",
   },
 };
 

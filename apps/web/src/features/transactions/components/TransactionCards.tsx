@@ -5,8 +5,8 @@ import {
 	LucideCircleCheck,
 	LucideCircleX,
 } from "lucide-react";
-import { FC } from "react";
-import { ITransaction, formatTokenAmount, isIncoming } from "@/features/transactions/types";
+import { FC, type ReactNode } from "react";
+import { ITransaction, TX_STATUS_STYLE, formatTokenAmount, isIncoming, isUnsettled, txTypeLabel } from "@/features/transactions/types";
 import Link from "next/link";
 import { transactionsRoutes } from "@/lib/routes";
 
@@ -22,7 +22,7 @@ const TransactionCards: FC<ITransaction> = ({
 	id,
 }) => {
 	const isFunding = isIncoming({ transaction_type });
-	const failed = status === "failed";
+	const failed = isUnsettled({ status });
 
 	const date = new Date(confirmed_at || created_at).toLocaleString("en-US", {
 		month: "short",
@@ -37,16 +37,12 @@ const TransactionCards: FC<ITransaction> = ({
 		8,
 	)}...${transaction_hash.slice(-8)}`;
 
-	const statusStyles = {
-		confirmed: "text-success-500 bg-success-50",
-		pending: "text-warning-600 bg-warning-50",
-		failed: "text-error-500 bg-error-50",
-	};
-
-	const statusIcon = {
+	const statusIcon: Record<typeof status, ReactNode> = {
 		confirmed: <LucideCircleCheck size={14} />,
 		pending: <LucideClock3 size={14} />,
 		failed: <LucideCircleX size={14} />,
+		aborted: <LucideCircleX size={14} />,
+		refunded: <LucideCircleCheck size={14} />,
 	};
 
 	return (
@@ -71,7 +67,7 @@ const TransactionCards: FC<ITransaction> = ({
 
 					<div className="min-w-0">
 						<h4 className="font-semibold text-base lg:text-lg capitalize leading-tight text-primary-600">
-							{transaction_type}
+							{txTypeLabel(transaction_type)}
 						</h4>
 
 						<p className="text-sm text-neutral-900 mt-1">{date}</p>
@@ -94,7 +90,7 @@ const TransactionCards: FC<ITransaction> = ({
 					</h3>
 
 					<div
-						className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${statusStyles[status]}`}
+						className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${TX_STATUS_STYLE[status]}`}
 					>
 						{statusIcon[status]}
 						<span className="capitalize">{status}</span>

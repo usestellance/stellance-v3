@@ -93,13 +93,24 @@ route("POST", "/wallet/:id/pay/transfer", "user", ({ params, body, user }) => {
 				created_at: iso(Date.now()),
 				confirmed_at: iso(Date.now()),
 				token_type: asset === "xlm" ? "native" : "credit_alphanum4",
-				transaction_type: "transfer",
+				// Live (2026-10-24): outgoing transfers are path payments.
+				transaction_type: "path_payment",
 				invoice_number: "",
+				source_amount: amount.toFixed(6),
+				source_asset: asset.toUpperCase(),
 			};
 			db.transactions.unshift(tx);
-			return tx;
+			return {
+				transaction_hash: tx.transaction_hash,
+				source_asset: asset.toUpperCase(),
+				source_amount: String(amount),
+				dest_asset: String(body.dest_asset ?? asset.toUpperCase()),
+				dest_amount: String(amount),
+				destination: String(body.destination_address),
+				fee_xlm: tx.network_fee,
+			};
 		}),
-		"Transfer successful",
+		"transfer successful",
 	);
 });
 
@@ -116,23 +127,22 @@ route("GET", "/wallet/export/:id", "user", ({ params, user }) => {
 
 route("GET", "/transaction", "user", ({ query, user }) => {
 	const status = STATUS_FOR_TYPE(query.get("status") ?? "all");
-	const type = STATUS_FOR_TYPE(query.get("transaction_type") ?? "all");
-	const search = query.get("search")?.toLowerCase();
+	const type = STATUS_FOR_TYPE(query.get("type") ?? "all");
 	const list = read()
 		.transactions.filter((t) => t.user_id === user!.id)
 		.filter((t) => !status || t.status === status)
 		.filter((t) => !type || t.transaction_type === type)
-		.filter((t) => !search || t.transaction_hash.includes(search) || t.invoice_number.toLowerCase().includes(search))
 		.sort((a, b) => (query.get("order_by") === "asc" ? 1 : -1) * a.created_at.localeCompare(b.created_at));
-	const limit = num(query.get("size") ?? query.get("limit"), 10);
+	const limit = num(query.get("limit"), 10);
 	const page = num(query.get("page"), 1);
 	// Like the live API: incoming payments carry their invoice and no network fee.
 	const items = list.slice((page - 1) * limit, page * limit).map(({ user_id: _u, invoice_number: _i, network_fee, ...t }) => {
 		void _u;
 		void _i;
-		return t.transaction_type === "payment" ? t : { ...t, network_fee };
+		return t.transaction_type === "payment" || t.transaction_type === "path_payment" ? t : { ...t, network_fee };
 	});
-	return ok({ data: items, page, limit, total_count: list.length });
+	// Live (2026-10-24): `items` + `meta`, with the older keys kept.
+	return ok({ items, meta: { page, limit, total: list.length, total_pages: Math.max(1, Math.ceil(list.length / limit)) }, data: items, page, limit, total_count: list.length });
 });
 
 route("GET", "/transaction/id/:id", "user", ({ params, user }) => {
@@ -159,6 +169,8 @@ route("GET", "/transaction/stats", "user", ({ user }) => {
 		pending_amount: sum(["sent", "viewed"]),
 		paid_amount: sum(["paid"]),
 		overdue_amount: sum([]),
+		expired_amount: sum(["expired"]),
+		invalid_payment_amount: sum(["invalid_payment"]),
 	});
 });
 

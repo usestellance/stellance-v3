@@ -50,7 +50,7 @@ export interface AdminInvoice {
 	payer_email: string;
 	total: number;
 	currency: string;
-	status: "draft" | "sent" | "viewed" | "paid" | "expired" | "invalid_payment" | "overdue" | "cancelled";
+	status: "draft" | "sent" | "viewed" | "pending" | "payment_detected" | "paid" | "expired" | "invalid_payment" | "overdue" | "cancelled" | "refunded";
 	created_at: string;
 }
 
@@ -59,8 +59,8 @@ export interface AdminTransaction {
 	invoice_number: string;
 	user_email: string;
 	amount: number;
-	type: "funding" | "payment" | "withdrawal" | "transfer";
-	status: "confirmed" | "pending" | "failed";
+	type: "funding" | "payment" | "withdrawal" | "path_payment" | "transfer";
+	status: "confirmed" | "pending" | "failed" | "aborted" | "refunded";
 	created_at: string;
 }
 

@@ -81,9 +81,11 @@ export const INVOICE_TONE: Record<string, Tone> = {
 	invalid_payment: "danger",
 	expired: "muted",
 	overdue: "danger",
+	pending: "warning",
 	cancelled: "muted",
+	refunded: "muted",
 };
-export const TX_TONE: Record<string, Tone> = { confirmed: "success", pending: "warning", failed: "danger" };
+export const TX_TONE: Record<string, Tone> = { confirmed: "success", pending: "warning", failed: "danger", aborted: "danger", refunded: "muted" };
 export const PAYMENT_TONE: Record<string, Tone> = { pending: "info", detected: "info", verified: "success", invalid: "danger", unmatched: "warning", failed: "danger" };
 
 export interface Column<T> {

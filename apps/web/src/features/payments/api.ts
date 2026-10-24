@@ -161,6 +161,7 @@ const PAYMENT_STATUS: Record<string, PaymentStatus> = {
 	failed: "failed",
 	expired: "expired",
 	cancelled: "cancelled",
+	refunded: "refunded",
 	draft: "not_started",
 };
 
@@ -203,8 +204,10 @@ function stateFrom(dto: PaymentRequestDto): InvoicePaymentState {
 	return { expectation, status, payment, attempts };
 }
 
-/** The payment status an invoice row shows, from the invoice's own status (no extra request). */
-export function paymentStatusOf(invoice: Pick<InvoiceType, "status">): PaymentStatus {
+/** The payment status an invoice row shows: the API's `payment_status`, or derived from its status (no extra request). */
+export function paymentStatusOf(invoice: Pick<InvoiceType, "status" | "payment_status">): PaymentStatus {
+	const fromApi = invoice.payment_status && PAYMENT_STATUS[invoice.payment_status];
+	if (fromApi) return fromApi;
 	switch (invoice.status) {
 		case "paid":
 			return "paid";
@@ -216,6 +219,10 @@ export function paymentStatusOf(invoice: Pick<InvoiceType, "status">): PaymentSt
 			return "expired";
 		case "invalid_payment":
 			return "invalid";
+		case "payment_detected":
+			return "payment_detected";
+		case "refunded":
+			return "refunded";
 		default:
 			return "awaiting_payment";
 	}

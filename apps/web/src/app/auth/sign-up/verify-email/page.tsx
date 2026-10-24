@@ -25,7 +25,7 @@ export default function Page() {
     setLoading(true);
     try {
       const res = await axiosInstance.get(
-        backendRoutes.AUTH_ROUTES.VALIDATE_TOKEN(token)
+        backendRoutes.AUTH_ROUTES.VALIDATE_TOKEN(token, email)
       );
       // console.log(res)
       if (res.data) {

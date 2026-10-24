@@ -56,9 +56,10 @@ export const StatsCards = () => {
       />
       <Card
         index={3}
-        title="Overdue"
-        amount={data?.overdue_amount?.amount || 0}
-        count={data?.overdue_amount?.invoice_count || 0}
+        // Unpaid invoices past their payment window are `expired`; the API no longer produces `overdue`.
+        title="Expired"
+        amount={data?.expired_amount?.amount || 0}
+        count={data?.expired_amount?.invoice_count || 0}
       />
     </div>
   );

@@ -35,6 +35,14 @@ export const useGenerateWallet = () => {
 
 	const handleCreateWallet = async () => {
 		const response = await axiousAuth.post("/wallet");
+		// Testnet funding lands a few seconds after the wallet exists; wait for it (up to ~12 s) so the
+		// page shows the balance and the funding entry instead of an empty wallet.
+		for (let attempt = 0; attempt < 6; attempt++) {
+			const ledger = await axiousAuth.get("/transaction?page=1&limit=1&type=funding").catch(() => null);
+			const rows = ledger?.data?.data?.items ?? ledger?.data?.data?.data ?? [];
+			if (rows.length) break;
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+		}
 		return response.data;
 	};
 

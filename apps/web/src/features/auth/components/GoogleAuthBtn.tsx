@@ -1,6 +1,7 @@
 "use client";
 
-import { useGoogleLogin } from "@react-oauth/google";
+import { useEffect, useRef, useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 import Cookies from "js-cookie";
 import { Button } from "@repo/ui/button";
 import { FcGoogle } from "react-icons/fc";
@@ -10,22 +11,30 @@ import { authRoutes, overviewRoutes } from "@/lib/routes";
 import { axiosInstance } from "@/lib/api/client";
 import { USE_MOCK_API } from "@/lib/api/source";
 
+/** Google renders its button at a fixed pixel width, 200 to 400. */
+const clampWidth = (px: number) => Math.round(Math.min(400, Math.max(200, px)));
+
 export default function GoogleAuthBtn() {
   const router = useRouter();
   const toast = useToast();
+  const container = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(400);
+
+  useEffect(() => {
+    const el = container.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => entry && setWidth(clampWidth(entry.contentRect.width)));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   /**
-   * Exchanges the Google identity for a Stellance session. The Google access token goes along so the
-   * API can verify the identity with Google instead of trusting the email (backend gap: /auth/social
-   * currently accepts unverified emails).
+   * Exchanges a Google ID token for a Stellance session. The API verifies the token itself (signature,
+   * audience, expiry, verified email), so nothing else about the user is sent.
    */
-  const signIn = async (email: string, providerId: string, accessToken?: string) => {
+  const signIn = async (idToken: string) => {
     try {
-      const res = await axiosInstance.post("/auth/social", {
-        email,
-        provider_id: providerId, // Google unique user id
-        ...(accessToken ? { access_token: accessToken, provider: "google" } : {}),
-      });
+      const res = await axiosInstance.post("/auth/social", { id_token: idToken });
 
       const data = res.data;
       const expiryDate = new Date(data.data.expires_in * 1000);
@@ -49,34 +58,33 @@ export default function GoogleAuthBtn() {
     }
   };
 
-  const login = useGoogleLogin({
-    scope: "openid email profile",
-    onSuccess: async (tokenResponse) => {
-      try {
-        const userInfoRes = await fetch(
-          "https://www.googleapis.com/oauth2/v3/userinfo",
-          {
-            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-          },
-        );
-        const user = await userInfoRes.json(); // has `email` and `sub`
-        await signIn(user.email, user.sub, tokenResponse.access_token);
-      } catch {
-        toast.error("Google authentication failed");
-      }
-    },
-    onError: () => toast.error("Google authentication failed"),
-  });
+  // Demo data: no Google round trip; the mock signs straight into the demo account.
+  if (USE_MOCK_API) {
+    return (
+      <Button
+        onClick={() => signIn("mock-google")}
+        type="button"
+        className="w-full bg-white text-black-500 font-normal hover:bg-neutral-100 border border-black-300"
+      >
+        <FcGoogle size={22} />
+        <span>Continue with Google</span>
+      </Button>
+    );
+  }
 
+  // Google's own button: the only way to get the ID token the API verifies.
   return (
-    <Button
-      // Demo data: skip Google and sign in to the demo account.
-      onClick={() => (USE_MOCK_API ? signIn("demo@usestellance.com", "mock-google") : login())}
-      type="button"
-      className="w-full bg-white text-black-500 font-normal hover:bg-neutral-100 border border-black-300"
-    >
-      <FcGoogle size={22} />
-      <span>Continue with Google</span>
-    </Button>
+    <div ref={container} className="flex w-full justify-center">
+      <GoogleLogin
+        onSuccess={({ credential }) => (credential ? signIn(credential) : toast.error("Google authentication failed"))}
+        onError={() => toast.error("Google authentication failed")}
+        theme="outline"
+        size="large"
+        text="continue_with"
+        shape="rectangular"
+        logo_alignment="center"
+        width={width}
+      />
+    </div>
   );
 }

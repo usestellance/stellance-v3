@@ -17,7 +17,8 @@ export type PaymentStatus =
 	| "unmatched"
 	| "failed"
 	| "expired"
-	| "cancelled";
+	| "cancelled"
+	| "refunded";
 
 /** One payment's verdict (the API's `verification_status`). */
 export type VerificationStatus = "detected" | "verified" | "invalid" | "unmatched" | "failed";

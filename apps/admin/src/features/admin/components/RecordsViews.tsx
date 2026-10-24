@@ -134,7 +134,7 @@ export function TransactionsView() {
 					empty="No transactions match."
 					columns={[
 						{ key: "u", header: "User", cell: (r) => <span className="text-neutral-900">{r.user_email}</span> },
-						{ key: "type", header: "Type", cell: (r) => <span className="capitalize">{r.type}</span> },
+						{ key: "type", header: "Type", cell: (r) => <span className="capitalize">{r.type.replace(/_/g, " ")}</span> },
 						{ key: "a", header: "Amount", cell: (r) => new Intl.NumberFormat("en-US").format(r.amount) },
 						{ key: "i", header: "Invoice", cell: (r) => r.invoice_number || "—" },
 						{ key: "s", header: "Status", cell: (r) => <Pill tone={TX_TONE[r.status]}>{r.status}</Pill> },

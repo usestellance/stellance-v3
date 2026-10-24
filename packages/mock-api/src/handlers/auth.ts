@@ -30,8 +30,10 @@ route("POST", "/auth/login", "public", ({ body }) => {
 	return ok(session(user), "Login successful");
 });
 
+/** Like the API, takes a Google `id_token`; the mock has no Google, so any token is the demo account. */
 route("POST", "/auth/social", "public", ({ body }) => {
-	const user = findByEmail(body.email) ?? findByEmail(DEMO_EMAIL)!;
+	if (!String(body.id_token ?? "")) throw new HttpError(400, "id_token is required");
+	const user = findByEmail(DEMO_EMAIL)!;
 	return ok(session(user), "Login successful");
 });
 

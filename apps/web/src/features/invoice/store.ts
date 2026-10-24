@@ -12,7 +12,9 @@ export type InvoiceStatus =
   | "cancelled"
   | "pending"
   | "expired"
-  | "invalid_payment";
+  | "invalid_payment"
+  | "payment_detected"
+  | "refunded";
 
 interface InvoiceFilterState {
   search: string;

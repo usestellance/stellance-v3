@@ -1,18 +1,17 @@
 import { create } from "zustand";
+import type { ITransaction } from "@/features/transactions/types";
 
 interface TransactionFilterState {
 	page: number;
 	size: number;
 	search: string;
 	order_by: "asc" | "desc";
-	status: "all" | "confirmed" | "pending" | "failed";
-	transaction_type: "all" | "funding" | "withdrawal" | "transfer";
+	status: "all" | ITransaction["status"];
+	transaction_type: "all" | ITransaction["transaction_type"];
 
 	setSearchTerm: (value: string) => void;
-	setStatus: (value: "all" | "confirmed" | "pending" | "failed") => void;
-	setTransactionType: (
-		value: "all" | "funding" | "withdrawal" | "transfer",
-	) => void;
+	setStatus: (value: "all" | ITransaction["status"]) => void;
+	setTransactionType: (value: "all" | ITransaction["transaction_type"]) => void;
 	setPage: (page: number) => void;
 	resetFilters: () => void;
 }

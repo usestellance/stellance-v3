@@ -187,3 +187,33 @@ Live builds of web and admin against `api.usestellance.com`, merchant `tlayefaah
   Fixed in the app; the API should return `[]`.
 - Backend: `/transaction/stats` still returns `overdue_amount` (always 0 now) and has no amounts for expired or
   invalid-payment invoices, so the overview's Overdue card can't show anything useful.
+
+## 8. API update and a new account (2026-10-24)
+
+The backend's 2026-10-24 push documents every route (`/docs/doc.json`). Changes the app now follows:
+
+- `/auth/social` takes `{ id_token }` and verifies it server side; it ignores email and user id. The app uses Google's
+  own button to get the ID token. The Google client id must list each app origin (app.usestellance.com, previews,
+  localhost) as an authorized JavaScript origin, or the button won't load.
+- Lists: `page` + `limit`, responses add `items` + `meta`. `/transaction` filters with `type` (`payment`, `withdrawal`,
+  `funding`, `path_payment`) and `status` (`pending`, `confirmed`, `failed`, `aborted`, `refunded`); `size`,
+  `transaction_type` and `search` are ignored.
+- Invoices carry `payment_status` and `payment_reference`; statuses add `pending`, `payment_detected`, `refunded`.
+- `/transaction/stats` adds `expired_amount` and `invalid_payment_amount`; the overview's fourth card is now Expired.
+
+New merchant through the live UI (throwaway mail.tm inbox):
+
+| Step | Result |
+| --- | --- |
+| Sign up | 201, "account has successfully been created", verification-sent page |
+| Sign in before verifying | 403 "email not verified, a new verification email has been sent" |
+| Verification email | Arrives from noreply@usestellance.com; the link (usestellance.com/auth/sign-up/verify-email) verifies |
+| Sign in | Lands on Set up your account; profile saves, then Create your first invoice |
+| Generate wallet | 201; funded with 10,000 XLM on Testnet a few seconds later (the app now waits for it) |
+| Wallet PIN | "Wallet PIN created successfully." |
+| Transfer 5 XLM to tlayefaah | "transfer successful"; sender ledger shows a `path_payment` of −5 XLM |
+| Receiver | Payment recorded as `unmatched` / `missing_reference`, notification "Unmatched Payment Received" |
+
+Backend notes from this run: an unmatched incoming payment raises the receiver's balance but has no wallet ledger
+entry (`/transaction`); `/wallet/{id}` returns `balance` without `usdc` for a new wallet; the verification email links
+to usestellance.com rather than app.usestellance.com (the landing site redirects it).

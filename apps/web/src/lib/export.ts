@@ -200,9 +200,14 @@ export const printReceipts = (invoices: Invoice[]) => {
           background-color: #fef3c7;
           color: #92400e;
         }
-        .status.overdue {
+        .status.overdue,
+        .status.invalid_payment {
           background-color: #fee2e2;
           color: #991b1b;
+        }
+        .status.expired {
+          background-color: #f3f4f6;
+          color: #374151;
         }
         .summary {
           margin-top: 30px;
@@ -270,10 +275,13 @@ export const printReceipts = (invoices: Invoice[]) => {
           invoices.filter((i) => i.status.toLowerCase() === "paid").length
         }</p>
         <p><strong>Pending:</strong> ${
-          invoices.filter((i) => i.status.toLowerCase() === "pending").length
+          invoices.filter((i) => ["sent", "viewed", "pending"].includes(i.status.toLowerCase())).length
         }</p>
-        <p><strong>Overdue:</strong> ${
-          invoices.filter((i) => i.status.toLowerCase() === "overdue").length
+        <p><strong>Expired:</strong> ${
+          invoices.filter((i) => i.status.toLowerCase() === "expired").length
+        }</p>
+        <p><strong>Invalid payment:</strong> ${
+          invoices.filter((i) => i.status.toLowerCase() === "invalid_payment").length
         }</p>
       </div>
       

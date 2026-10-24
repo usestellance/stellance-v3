@@ -73,12 +73,13 @@ function listFor(db: MockDb, user: MockUser, query: URLSearchParams) {
 route("GET", "/invoice", "user", ({ query, user }) => {
 	const db = read();
 	const list = listFor(db, user!, query);
-	const limit = num(query.get("page_count") ?? query.get("size"), 10);
+	const limit = num(query.get("limit") ?? query.get("page_count"), 10);
 	const pages = Math.max(1, Math.ceil(list.length / limit));
 	const page = Math.min(num(query.get("page"), 1), pages);
 	return ok({
+		items: list.slice((page - 1) * limit, page * limit).map((i) => invoiceDto(db, i)),
 		invoice: list.slice((page - 1) * limit, page * limit).map((i) => invoiceDto(db, i)),
-		meta: { page, page_count: limit, total_invoice_count: list.length, total_pages: pages },
+		meta: { page, limit, total: list.length, page_count: limit, total_invoice_count: list.length, total_pages: pages },
 	});
 });
 

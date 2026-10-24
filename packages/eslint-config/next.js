@@ -15,6 +15,7 @@ export const nextJsConfig = [
     // Default ignores of eslint-config-next:
     ".next/**",
     ".next-verify/**",
+    ".next-live/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

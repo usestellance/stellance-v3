@@ -94,6 +94,13 @@ export const PAYMENT_STATUS: Record<PaymentStatus, StatusMeta> = {
 		tone: "muted",
 		final: true,
 	},
+	refunded: {
+		label: "Refunded",
+		title: "Payment refunded",
+		description: "The payment for this invoice was sent back to the payer.",
+		tone: "muted",
+		final: true,
+	},
 };
 
 export const VERIFICATION_STATUS: Record<VerificationStatus, { label: string; tone: Tone }> = {

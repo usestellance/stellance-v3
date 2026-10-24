@@ -33,18 +33,19 @@ export function invoiceDto(db: MockDb, invoice: MockInvoice) {
 	const owner = db.users.find((u) => u.id === invoice.user_id);
 	const {
 		user_id: _owner,
-		payment_reference: _ref,
 		payment_asset_code: _code,
 		payment_asset_issuer: _issuer,
 		payment_amount: _amount,
 		payment_expires_at: _expires,
 		...rest
 	} = invoice;
-	void [_owner, _ref, _code, _issuer, _amount, _expires];
+	void [_owner, _code, _issuer, _amount, _expires];
 	const verified = db.payments.find((p) => p.invoice_id === invoice.id && p.verification_status === "verified");
 	return {
 		...rest,
 		paid_at: invoice.status === "paid" ? (verified?.verified_at ?? invoice.updated_at) : null,
+		payment_status: PAYMENT_STATUS[invoice.status] ?? "awaiting_payment",
+		payer_wallet_address: invoice.status === "paid" ? (verified?.sender ?? null) : null,
 		createdBy: owner
 			? {
 					user_id: owner.id,

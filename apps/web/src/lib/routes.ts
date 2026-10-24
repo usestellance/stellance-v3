@@ -65,7 +65,8 @@ export const backendRoutes = {
 		SIGN_IN: "/auth/login",
 		RESEND_VERIFICATION_LINK: (email: string) =>
 			`/auth/resend-email?email=${email}`,
-		VALIDATE_TOKEN: (token: string) => `/auth/validate?token=${token}`,
+		// With the email, an expired token gets a fresh verification email.
+		VALIDATE_TOKEN: (token: string, email?: string) => `/auth/validate?${new URLSearchParams({ token, ...(email ? { email } : {}) })}`,
 		RESET_PASSWORD_EMAIL: (email: string) => `/auth/reset?email=${email}`,
 		RESET_PASSWORD: `/auth/reset-password`,
 	},

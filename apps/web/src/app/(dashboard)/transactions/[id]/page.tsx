@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import GoBack from "@/components/GoBack";
 import Link from "next/link";
 import { ExplorerLink } from "@/features/payments/components/ExplorerLink";
-import { formatTokenAmount, isIncoming } from "@/features/transactions/types";
+import { TX_STATUS_STYLE, formatTokenAmount, isIncoming, txTypeLabel } from "@/features/transactions/types";
 import { invoiceRoutes } from "@/lib/routes";
 import { useToast } from "@/lib/use-toast";
 import { useGetTransaction } from "@/features/transactions/hooks";
@@ -46,7 +46,7 @@ const TransactionPreview = () => {
 				<div className="flex justify-between items-center mb-8 max-sm:flex-col max-sm:items-start gap-3">
 					<h2 className="text-2xl font-semibold">Transaction Details</h2>
 
-					<span className="rounded-full bg-success-50 text-success-600 px-4 py-1 text-sm capitalize">
+					<span className={`rounded-full px-4 py-1 text-sm capitalize ${TX_STATUS_STYLE[data.status as keyof typeof TX_STATUS_STYLE] ?? TX_STATUS_STYLE.pending}`}>
 						{data.status}
 					</span>
 				</div>
@@ -54,7 +54,7 @@ const TransactionPreview = () => {
 				<div className="space-y-5">
 					<Detail label="Transaction ID" value={data.id} />
 
-					<Detail label="Transaction Type" value={isIncoming(data) ? `${data.transaction_type} (received)` : data.transaction_type} />
+					<Detail label="Transaction Type" value={isIncoming(data) ? `${txTypeLabel(data.transaction_type)} (received)` : txTypeLabel(data.transaction_type)} />
 
 					<Detail label="Amount" value={formatTokenAmount(data.amount, data.currency)} />
 

@@ -39,6 +39,12 @@ export interface InvoiceType {
   created_at?: string;
   updated_at?: string;
   paid_at?: string | null;
+  /** Derived by the API from `status` (awaiting_payment, payment_detected, paid, invalid_payment, expired…). */
+  payment_status?: string;
+  /** The memo the payer must attach (`STL-…`). */
+  payment_reference?: string;
+  /** The account that paid; set once paid. */
+  payer_wallet_address?: string | null;
   invoice_items?: InvoiceItemsTypes[];
   items?: InvoiceItemsTypes[];
   createdBy?: {

@@ -5,7 +5,7 @@ import { useAuthStore } from "@/features/auth/store";
 import { useTransactionFilter } from "@/features/transactions/store";
 
 export const useGetTransactions = () => {
-	const { page, size, search, status, transaction_type, order_by } =
+	const { page, size, status, transaction_type, order_by } =
 		useTransactionFilter();
 
 	const credentials = useAuthStore((state) => state.credentials);
@@ -15,19 +15,15 @@ export const useGetTransactions = () => {
 		const params = new URLSearchParams();
 
 		params.append("page", String(page));
-		params.append("size", String(size));
+		params.append("limit", String(size));
 		params.append("order_by", order_by);
-
-		if (search) {
-			params.append("search", search);
-		}
 
 		if (status !== "all") {
 			params.append("status", status);
 		}
 
 		if (transaction_type !== "all") {
-			params.append("transaction_type", transaction_type);
+			params.append("type", transaction_type);
 		}
 
 		const { data } = await get(`/transaction?${params.toString()}`);
@@ -40,7 +36,6 @@ export const useGetTransactions = () => {
 			"transactions",
 			page,
 			size,
-			search,
 			status,
 			transaction_type,
 			order_by,

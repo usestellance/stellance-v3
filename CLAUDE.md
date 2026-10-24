@@ -55,7 +55,11 @@ jspdf (+ autotable) and xlsx for exports, `qrcode`, `@react-oauth/google`, gsap 
   JSON document in localStorage (`stellance-mock-db`); "Reset demo data" on the sign-in page restores the seed. Seed
   dates are relative to the first run. Shape mock data like the live responses (captured shapes in `docs/test-results.md`).
 - Backend: `https://api.usestellance.com/api/v1` (separate repo). Live routes are singular (`/invoice`, `/transaction`,
-  `/profile/me`, `/notification`); the Swagger at `/docs` is out of date. Success `{ status_code?, message, data }`.
+  `/profile/me`, `/notification`); the Swagger at `/docs` (`/docs/doc.json`) is current as of 2026-10-24. Success
+  `{ status_code?, message, data }`. Lists page with `page` + `limit` and return `items` + `meta {page, limit, total,
+  total_pages}` (older keys kept); `/transaction` filters with `type` and `status`, no search.
+- Google sign-in posts `{ id_token }` to `/auth/social` (the API verifies it), so it uses Google's own button
+  (`GoogleLogin`); the client id needs every app origin in its authorized JavaScript origins.
 - The browser calls `/api/v1/*` on its own origin, rewritten in each app's `next.config.ts` to the backend
   (`API_PROXY_TARGET`). `NEXT_PUBLIC_API_URL` (or the old `NEXT_PUBLIC_BASE_URL`) forces direct calls.
 - Web client: `lib/api/client.ts` (`axiosInstance` public, `axiosAuth` signed-in) and `lib/api/use-axios-auth.ts` (adds
@@ -78,8 +82,9 @@ jspdf (+ autotable) and xlsx for exports, `qrcode`, `@react-oauth/google`, gsap 
   Components never decide these. "paid" only ever comes from the API's invoice status.
 - Open invoices poll (6 s) until final; when the status changes, `useRefreshOnSettle` invalidates invoices, payments,
   notifications and transactions. Live returns an in-flight payment as `pending`; `api.ts` maps it to `detected`.
-- Invoice statuses: draft, sent, viewed, paid, expired, invalid_payment, cancelled. Incoming money is a `payment`
-  ledger entry with `invoice_id` and no `network_fee`.
+- Invoice statuses: draft, sent, viewed, pending, payment_detected, paid, expired, invalid_payment, cancelled, refunded;
+  invoices carry the API's `payment_status` and `payment_reference`. Incoming money is a `payment` ledger entry with
+  `invoice_id` and no `network_fee`; outgoing transfers are `path_payment` (shown as "transfer").
 - `PaymentSimulator` (mock only) sends the PRD's scenarios through the mock backend: detected for 4 s, then the result,
   then the invoice paid 3 s later if valid.
 - Stellar constants and explorer links: `lib/stellar/config.ts`.

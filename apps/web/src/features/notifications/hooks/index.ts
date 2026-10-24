@@ -16,7 +16,7 @@ export const useGetNotifications = () => {
 
   const handleGetNotifications = async () => {
     const params = new URLSearchParams();
-    params.append("count", notificationsCount.toString());
+    params.append("limit", notificationsCount.toString());
     params.append("page", notificationsPage.toString());
     params.append("order_by", notificationsOrder);
 
