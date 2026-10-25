@@ -137,11 +137,6 @@ const Header = () => {
                   Features
                 </Link>
               </li>
-              <li className="p-2.5">
-                <Link href="/#solutions" onClick={() => setIsNavOpen(false)}>
-                  Solutions
-                </Link>
-              </li>
             </ul>
 
             <div className="flex gap-[30px] flex-col items-center mt-[30px]">
@@ -180,9 +175,6 @@ const Header = () => {
               </li>
               <li className="p-2.5 font-medium hover:text-primary-500 duration-150">
                 <Link href="/#features">Features</Link>
-              </li>
-              <li className="p-2.5 font-medium hover:text-primary-500 duration-150">
-                <Link href="/#solutions">Solutions</Link>
               </li>
             </ul>
           </nav>

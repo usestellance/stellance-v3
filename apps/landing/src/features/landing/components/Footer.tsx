@@ -1,82 +1,71 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BsTwitterX } from "react-icons/bs";
+import { APP_LINKS } from "@/lib/site";
+
+const COLUMNS = [
+  {
+    title: "Quick Links",
+    links: [
+      { label: "Home", href: "/#home" },
+      { label: "About", href: "/#about" },
+      { label: "How it works", href: "/#how-it-works" },
+      { label: "Features", href: "/#features" },
+    ],
+  },
+  {
+    title: "Get Started",
+    links: [
+      { label: "Key benefits", href: "/#benefits" },
+      { label: "Our vision", href: "/#vision" },
+      { label: "Log in", href: APP_LINKS.signIn },
+      { label: "Sign up", href: APP_LINKS.signUp },
+    ],
+  },
+];
 
 const Footer = () => {
   return (
-    <footer className="bg-primary-500 py-12 text-neutral-500">
-      <div className="landing-container flex flex-col gap-16 sm:flex-row sm:items-start">
-        <div className="flex gap-6 items-start sm:justify-between bg-re-400">
-          <Link
-            href="/"
-            className={`min-w-16 sm:min-h-16 md:h-20  w-fit inline-block`}
-          >
-            <Image
-              src="/images/logo-white.svg"
-              alt="Stellance Logo"
-              width={100}
-              loading="eager"
-              height={100}
-              className="h-full w-full object-contain"
-            />
-          </Link>
-          <div className="flex flex-col sm:gap-3 ">
-            <h4 className="text-2xl md:text-[32px] w-fit">Stellance</h4>
-            <p className="text-sm md:text-base sm:w-3/4">
-              Invoicing and USDC payments on the Stellar network, with every
-              payment verified against its invoice. Now on Stellar Testnet.
+    <footer className="bg-neutral-500 text-black-500 py-12 lg:pt-[60px] lg:pb-[44px]">
+      <div className="landing-container">
+        <div className="flex flex-col gap-12 lg:flex-row lg:justify-between">
+          <div className="flex max-w-[439px] shrink flex-col gap-[15px] xl:px-[30px]">
+            <Link href="/" className="flex items-center gap-1 w-fit">
+              <Image src="/images/landing/footer-logo.png" alt="Stellance logo" width={90} height={77} className="h-[60px] w-auto lg:h-[74px]" />
+              <span className="text-2xl lg:text-[32px]">Stellance</span>
+            </Link>
+            <p className="max-w-[325px] text-base tracking-[0.01em]">
+              Invoicing and USDC payments on the Stellar network, with every payment verified against its invoice.
             </p>
-          </div>
-        </div>
-        {/*  */}
-        <div className="flex justify-between gap-10 lg:gap-20">
-          <div className="text-sm sm:text-base md:text-lg">
-            <h4 className="whitespace-nowrap">QUICK LINKS</h4>
-            <div className="mt-4 flex flex-col gap-3">
-              <Link href="/#home" className="">
-                Home
-              </Link>
-              <Link href="/#about" className="">
-                About
-              </Link>
-              <Link href="/#features" className="">
-                Features
-              </Link>
-              <Link href="/#solutions" className="">
-                Solutions
+            <div className="flex items-center gap-[22px]">
+              <Link href="https://x.com/stellancehq?s=11" target="_blank" aria-label="Stellance on X">
+                <Image src="/images/landing/social-x.svg" alt="" width={36} height={36} />
               </Link>
             </div>
           </div>
-          <div className="text-sm sm:text-base md:text-lg">
-            <h4 className="">CONTACT US</h4>
-            <div className="mt-4 flex flex-col gap-3">
-              <Link href="mailto:support@usestellance.com" className="">
+
+          <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:gap-x-14 xl:gap-x-24 2xl:gap-x-[180px]">
+            {COLUMNS.map((col) => (
+              <div key={col.title} className="flex flex-col gap-[30px]">
+                <h4 className="text-base uppercase lg:text-lg whitespace-nowrap">{col.title}</h4>
+                <div className="flex flex-col gap-5">
+                  {col.links.map((l) => (
+                    <Link key={l.label} href={l.href} className="text-base lg:text-lg hover:text-primary-500 whitespace-nowrap">
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="flex flex-col gap-[30px] max-sm:col-span-2">
+              <h4 className="text-base uppercase lg:text-lg whitespace-nowrap">Contact Us</h4>
+              <Link href="mailto:support@usestellance.com" className="text-base tracking-[-0.01em] hover:text-primary-500">
                 support@usestellance.com
               </Link>
-              <div className="text-3xl flex gap-3">
-                {/* <Link href="#" className="">
-                  <RxInstagramLogo />
-                </Link> */}
-                <Link
-                  href="https://x.com/stellancehq?s=11"
-                  target="_blank"
-                  className=""
-                >
-                  <BsTwitterX />
-                </Link>
-                {/* <Link href="#" className="">
-                  <CiLinkedin />
-                </Link> */}
-              </div>
             </div>
           </div>
         </div>
-        <div className="max-xl:hidden text-center whitespace-nowrap">
-          Copyright © Stellance Inc. 2025
-        </div>
-      </div>
-      <div className="xl:hidden text-center whitespace-nowrap mt-20">
-        Copyright © Stellance Inc. 2025
+
+        <p className="mt-14 text-base tracking-[0.01em] lg:mt-[60px] lg:px-[30px]">Copyright © Stellance Inc. 2025</p>
       </div>
     </footer>
   );
