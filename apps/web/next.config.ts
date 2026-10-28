@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
 	// A separate output dir for one-off verification builds (`NEXT_DIST_DIR=.next-verify next build`)
 	// so they never overwrite the `.next` a running `pnpm dev` is serving from.
 	distDir: process.env.NEXT_DIST_DIR || ".next",
+	// Vercel Services does not route /_next/image to this service (it 404s in production), so images are
+	// served as they are, as in the landing app.
+	images: { unoptimized: true },
 	reactCompiler: true,
 	transpilePackages: ["@repo/ui", "@repo/mock-api"],
 	// Dev only: let a phone on the LAN load dev assets / HMR.

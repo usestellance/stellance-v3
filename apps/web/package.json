@@ -10,10 +10,12 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@creit.tech/stellar-wallets-kit": "2.7.1",
     "@hookform/resolvers": "^5.9.1",
     "@react-oauth/google": "^0.13.5",
     "@repo/mock-api": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@stellar/stellar-sdk": "17.2.1",
     "@tanstack/react-query": "^5.104.4",
     "@tanstack/react-query-devtools": "^5.104.4",
     "@tanstack/react-table": "^8.21.3",

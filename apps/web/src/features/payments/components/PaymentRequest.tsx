@@ -1,7 +1,7 @@
 "use client";
 
-import { Info, Wallet } from "lucide-react";
-import { Button } from "@repo/ui/button";
+import { Info } from "lucide-react";
+import { PayWithWallet } from "@/features/payer-wallet/components/PayWithWallet";
 import type { InvoiceType } from "@/features/invoice/types";
 import { CopyField } from "@/features/payments/components/CopyField";
 import { ExplorerLink } from "@/features/payments/components/ExplorerLink";
@@ -66,6 +66,10 @@ export function PaymentRequest({ invoice }: { invoice: InvoiceType }) {
 				{!closed && (
 					<div className="space-y-5 rounded-xl border border-primary-50 bg-neutral-500 p-4 sm:p-6">
 						<h3 className="font-bold sm:text-lg">How to pay</h3>
+						<PayWithWallet expectation={expectation} disabled={state.status === "payment_detected"} />
+						<p className="flex items-center gap-3 text-xs font-medium tracking-wide text-neutral-900 uppercase before:h-px before:flex-1 before:bg-primary-50 after:h-px after:flex-1 after:bg-primary-50">
+							or send it manually
+						</p>
 						<CopyField
 							label="Send to this wallet"
 							value={expectation.recipient}
@@ -89,14 +93,9 @@ export function PaymentRequest({ invoice }: { invoice: InvoiceType }) {
 
 						<div className="flex flex-col items-center gap-3 border-t border-primary-50 pt-5 sm:flex-row sm:items-center">
 							<PaymentQr value={uri} label="QR code with the payment details for a Stellar wallet" />
-							<div className="w-full space-y-3 text-center sm:text-left">
-								<p className="text-sm text-neutral-900">Scan with a Stellar wallet, or open one on this device with the details filled in.</p>
-								<Button asChild className="w-full sm:max-w-[220px]">
-									<a href={uri}>
-										<Wallet /> Open wallet
-									</a>
-								</Button>
-							</div>
+							<p className="w-full text-center text-sm text-neutral-900 sm:text-left">
+								Or scan this with a Stellar wallet on your phone: the recipient, amount, asset and memo are filled in.
+							</p>
 						</div>
 					</div>
 				)}

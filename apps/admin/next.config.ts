@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
 	basePath: BASE_PATH,
 	env: { NEXT_PUBLIC_BASE_PATH: BASE_PATH, NEXT_PUBLIC_API_URL: API_URL, NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV ?? "" },
 	distDir: process.env.NEXT_DIST_DIR || ".next",
+	// Vercel Services does not route /_next/image to this service (it 404s in production), so images are
+	// served as they are, as in the landing app.
+	images: { unoptimized: true },
 	reactCompiler: true,
 	transpilePackages: ["@repo/ui", "@repo/mock-api"],
 	allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
