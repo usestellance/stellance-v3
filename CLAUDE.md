@@ -86,8 +86,11 @@ jspdf (+ autotable) and xlsx for exports, `qrcode`, `@react-oauth/google`, gsap 
   invoices carry the API's `payment_status` and `payment_reference`. Incoming money is a `payment` ledger entry with
   `invoice_id` and no `network_fee`; outgoing transfers are `path_payment` (shown as "transfer").
 - Paying from the client's own wallet (`features/payer-wallet`, as in ../../go-medi): Stellar Wallets Kit, loaded on
-  first use. Freighter / xBull extensions, Albedo, and LOBSTR or the Freighter app over WalletConnect on phones
-  (`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`; the Reown project must list every Stellance domain). `pay.ts` builds the
+  first use. Varial (formerly Freighter; module id still `freighter`) / xBull extensions, Albedo, and LOBSTR or the
+  Varial app over WalletConnect on phones (`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`; the Reown project must list every
+  Stellance domain). Laptops check for Varial's extension and offer its store link; phones can't see installed apps,
+  so the page deep-links straight to the chosen app and offers the App Store / Play link if it's still in front
+  2.5 s later (in Varial's own browser, `window.stellar.platform === "mobile"`, it pairs in place). `pay.ts` builds the
   exact payment (reference as text memo) after checking trustline and balance, the wallet signs, Horizon Testnet
   takes it; the API still detects and verifies. A submit with no answer is never retried.
 - `PaymentSimulator` (mock only) sends the PRD's scenarios through the mock backend: detected for 4 s, then the result,
