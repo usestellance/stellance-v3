@@ -57,7 +57,7 @@ const Template03 = ({ invoice }: { invoice: InvoiceType }) => {
         </div>
         <div className="flex flex-col items-center">
           <div
-            className={`w-[45px] h-[35px] sm:h-[50px] sm:w-[60px] lg:w-20 lg:h-[70px] rounded-[3.35px] ${!invoice?.logo_url && "bg-primary-50"}`}
+            className={`w-11.25 h-8.75 sm:h-12.5 sm:w-15 lg:w-20 lg:h-17.5 rounded-[3.35px] ${!invoice?.logo_url && "bg-primary-50"}`}
           >
             <img
               src={invoice?.logo_url || withBasePath("/images/logo-primary.svg")}
@@ -117,44 +117,44 @@ function InvoiceItems({ inv }: { inv: InvoiceType }) {
   const addedFee = Math.max(total - subTotal, 0);
 
   return (
-    <div className="bg-[#D9E4F8] rounded-[5px] pb-12 lg:pb-[83px]">
+    <div className="bg-primary-50 rounded-[5px] pb-12 lg:pb-20.75">
       <div className="overflow-x-auto scroll pb-4">
-        <table className=" bg-[#D9E4F8] min-w-full border-collapse border-spacing-y2 overflow-hidden rounded-[5px]">
+        <table className=" bg-primary-50 min-w-full border-collapse border-spacing-y2 overflow-hidden rounded-[5px]">
           <thead className="bg-[#D1E2FF] overflow-hidden ">
             <tr className="">
               <th
                 scope="col"
-                className="px-2 py-[15px] text-xs  lg:text-base text-center font-bold whitespace-nowrap "
+                className="px-2 py-3.75 text-xs  lg:text-base text-center font-bold whitespace-nowrap "
               >
                 Type
               </th>
               <th
                 scope="col"
-                className="px-4 py-[15px] text-sm lg:text-base text-center font-bold whitespace-nowrap "
+                className="px-4 py-3.75 text-sm lg:text-base text-center font-bold whitespace-nowrap "
               >
                 Description
               </th>
               <th
                 scope="col"
-                className="px-4 py-[15px] text-sm lg:text-base text-center font-bold whitespace-nowrap "
+                className="px-4 py-3.75 text-sm lg:text-base text-center font-bold whitespace-nowrap "
               >
                 Quantity
               </th>
               <th
                 scope="col"
-                className="px-4 py-[15px] text-sm lg:text-base text-center font-bold whitespace-nowrap "
+                className="px-4 py-3.75 text-sm lg:text-base text-center font-bold whitespace-nowrap "
               >
                 Unit Price
               </th>
               <th
                 scope="col"
-                className="px-4 py-[15px] text-sm lg:text-base text-center font-bold whitespace-nowrap "
+                className="px-4 py-3.75 text-sm lg:text-base text-center font-bold whitespace-nowrap "
               >
                 Discount (%)
               </th>
               <th
                 scope="col"
-                className="px-4 py-[15px] text-sm lg:text-base text-center font-bold whitespace-nowrap "
+                className="px-4 py-3.75 text-sm lg:text-base text-center font-bold whitespace-nowrap "
               >
                 Amount
               </th>
@@ -166,22 +166,22 @@ function InvoiceItems({ inv }: { inv: InvoiceType }) {
           <tbody className="divide-y divide-neutral-600">
             {inv?.items?.map((inv, i) => (
               <tr key={i} className="bg-primary-50 font-medium">
-                <td className="px-4 py-[15px] whitespace-nowrap text-xs lg:text-base text-center">
+                <td className="px-4 py-3.75 whitespace-nowrap text-xs lg:text-base text-center">
                   {inv.invoice_type === "per_unit" ? "Per Unit" : "Per Hour"}
                 </td>
-                <td className="px-4 py-[15px] whitespace-nowrap text-xs lg:text-base text-center">
+                <td className="px-4 py-3.75 whitespace-nowrap text-xs lg:text-base text-center">
                   {inv.description || ""}
                 </td>
-                <td className="px-4 py-[15px] text-xs lg:text-base text-center">
+                <td className="px-4 py-3.75 text-xs lg:text-base text-center">
                   {inv.quantity || 0}
                 </td>
-                <td className="px-4 py-[15px] text-xs lg:text-base text-center">
+                <td className="px-4 py-3.75 text-xs lg:text-base text-center">
                   {formatCurrency(inv.unit_price || 0)}
                 </td>
-                <td className="px-4 py-[15px] text-xs lg:text-base text-center">
+                <td className="px-4 py-3.75 text-xs lg:text-base text-center">
                   {inv.discount || 0}
                 </td>
-                <td className="px-4 py-[15px] text-xs lg:text-base text-center">
+                <td className="px-4 py-3.75 text-xs lg:text-base text-center">
                   {formatCurrency(calculateLineAmount(inv))}
                 </td>
               </tr>
@@ -190,8 +190,8 @@ function InvoiceItems({ inv }: { inv: InvoiceType }) {
         </table>
       </div>
       <div className="bg-red400 w-full custom-container">
-        <div className="flex justify-end py-[18px]">
-          <div className="flex items-center gap-[81px] justify-end">
+        <div className="flex justify-end py-4.5">
+          <div className="flex items-center gap-20.25 justify-end">
             <p className="text-xs font-bold text-text-strong lg:text-lg">
               Sub Total
             </p>
@@ -205,19 +205,19 @@ function InvoiceItems({ inv }: { inv: InvoiceType }) {
         <hr className="text-[#BFBFBF99] w-[230px] lg:w-[558px]" />
       </div> */}
       {addedFee > 0 && (
-        <div className="flex justify-end py-[18px] custom-container">
-          <div className="flex items-center gap-[81px] justify-end">
+        <div className="flex justify-end py-4.5 custom-container">
+          <div className="flex items-center gap-20.25 justify-end">
             <p className="text-xs font-bold text-text-strong lg:text-lg">Service Fee</p>
             <p className="text-xs font-bold text-text-strong lg:text-lg">{formatCurrency(addedFee)}</p>
           </div>
         </div>
       )}
       <div className="custom-container mt-2 w-full flex flex-col items-end justify-end">
-        <div className="w-full max-w-[273px] lg:max-w-[558px] flex justifybetween h-[43px] overflow-hidden items-center rounded-[6px] ">
-          <h5 className="text-sm font-bold leading-[25px] py-3 px-4 w-20 md:text-lg">
+        <div className="w-full max-w-68.25 lg:max-w-139.5 flex justifybetween h-10.75 overflow-hidden items-center rounded-[6px] ">
+          <h5 className="text-sm font-bold leading-6.25 py-3 px-4 w-20 md:text-lg">
             Total
           </h5>
-          <h5 className="truncate w-full text-end text-sm font-bold leading-[25px] md:text-base lg:text-lg ">
+          <h5 className="truncate w-full text-end text-sm font-bold leading-6.25 md:text-base lg:text-lg ">
             {formatCurrency(total || 0)}
           </h5>
         </div>

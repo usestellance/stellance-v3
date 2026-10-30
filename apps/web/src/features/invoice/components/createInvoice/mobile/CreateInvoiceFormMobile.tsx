@@ -135,10 +135,13 @@ export default function CreateInvoiceFormMobile({
       return;
     }
 
+    // Editing keeps the invoice's own template; a new invoice uses the one picked in the gallery.
     const stored = localStorage.getItem("invoice-template");
-    const template_id = stored
-      ? JSON.parse(stored).state.selectedTemplate
-      : "template_001";
+    const template_id = invoice?.template_id
+      ? invoice.template_id
+      : stored
+        ? JSON.parse(stored).state.selectedTemplate
+        : "template_001";
 
     const payload = {
       title: values.title,
@@ -154,17 +157,12 @@ export default function CreateInvoiceFormMobile({
       make_default,
       note: values.notes,
     };
+    // Items are cleared only once the API has the invoice, so a failed save keeps what was typed.
     if (isEdit) {
-      updateInvoice.mutate(payload);
-      console.log("edit mode");
+      updateInvoice.mutate(payload, { onSuccess: clearItems });
     } else {
-      createInvoice.mutate(payload);
+      createInvoice.mutate(payload, { onSuccess: clearItems });
     }
-
-    if (createInvoice.isSuccess) {
-      clearItems();
-    }
-    console.log(payload);
   }
 
   useEffect(() => {
@@ -189,9 +187,10 @@ export default function CreateInvoiceFormMobile({
   }, [isEdit, invoice, form, clearItems, addItems]);
 
   return (
-    <div className="max-w-[1200px] mx-auto">
+    <div className="max-w-300 mx-auto">
       <Form {...form}>
         <form
+          noValidate
           onSubmit={form.handleSubmit(onSubmit, (errors) =>
             console.log("FORM ERRORS:", errors),
           )}
@@ -371,7 +370,7 @@ export default function CreateInvoiceFormMobile({
           <div className="custom-container">
             <h3 className="mt-10 text-sm lg:text-[22px]">Invoice Items</h3>
 
-            <div className="flex flex-col gap-[26px] mt-5">
+            <div className="flex flex-col gap-6.5 mt-5">
               {items.map((item, i) => (
                 <InvoiceItemsCard
                   key={i}
@@ -394,7 +393,7 @@ export default function CreateInvoiceFormMobile({
               <Button
                 type="button"
                 onClick={() => setOpenDrawer(true)}
-                className="bg-primary-50 text-black-500 font-medium text-xs w-[123px] h-9 mt-8 mb-3"
+                className="bg-primary-50 text-black-500 font-medium text-xs w-30.75 h-9 mt-8 mb-3"
               >
                 Add New Item
               </Button>
@@ -406,10 +405,10 @@ export default function CreateInvoiceFormMobile({
           {/* TOTAL: what the client sees and pays */}
           <div className="custom-container">
             <div className="my-10 border rounded-[5px] border-primary-500 text-sm flex justify-between items-center">
-              <span className="bg-primary-500 px-[18px] py-[11px] font-bold text-neutral-500">
+              <span className="bg-primary-500 px-4.5-[11px] font-bold text-neutral-500">
                 Total
               </span>
-              <span className="font-bold px-[15px] py-[11px] line-clamp-1">
+              <span className="font-bold px-3.75 py-2.75 line-clamp-1">
                 {clientTotal}
               </span>
             </div>
@@ -454,7 +453,7 @@ export default function CreateInvoiceFormMobile({
 
           <PaymentRequirements total={clientTotal} invoiceId={invoice?.id} />
 
-          <div className="flex max-w-full gap-[30px]  justify-center mt-10 lg:mt-[60px]">
+          <div className="flex max-w-full gap-7.5  justify-center mt-10 lg:mt-15">
             <Button
               onClick={() => router.back()}
               className="in-app-btn"

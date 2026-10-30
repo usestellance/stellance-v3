@@ -214,12 +214,10 @@ export const useCreateInvoice = () => {
 
 export const useUpdateInvoice = ({ invoiceId }: { invoiceId: string }) => {
   const toast = useToast();
-  const credentials = useAuthStore((state) => state.credentials);
   const logout = useLogout();
   const axiosAuth = useAxiosAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const is_profile_complete = credentials?.user?.profile_complete;
 
   const handleCreateInvoice = async (data: InvoiceType) => {
     const formData = new FormData();
@@ -232,7 +230,7 @@ export const useUpdateInvoice = ({ invoiceId }: { invoiceId: string }) => {
     formData.append("template_id", data.template_id || ""); // REQUIRED - only once, as string
     formData.append("service_fee", String(data.service_fee));
     formData.append("make_default", String(data.make_default));
-    formData.append("note", String(data.note));
+    formData.append("note", data.note ?? "");
 
     // ✅ Stringify invoice_items properly
     formData.append(
@@ -265,19 +263,20 @@ export const useUpdateInvoice = ({ invoiceId }: { invoiceId: string }) => {
       router.replace(invoiceRoutes.PREVIEW_INVOICE({ invoice_id: invoiceId }));
     },
     onError: (error: ApiErrorLike) => {
-      const errorMessage =
-        error?.response?.data?.message ?? "An unknown error occurred.";
-
       if (error.response?.status === 401) {
         toast.error("Unauthorized Access");
         logout();
         router.push(authRoutes.LOGIN);
-      } else if (is_profile_complete) {
-        toast.error(errorMessage);
+        return;
       }
-
-      // Log the error for debugging
-      console.error("Invoice creation error:", error.response?.data);
+      // The API locks an invoice once it is sent and reports it as not found.
+      if (error.response?.status === 404) {
+        toast.error("This invoice has been sent, so it can no longer be edited.");
+        queryClient.invalidateQueries({ queryKey: ["invoice", invoiceId] });
+        router.replace(invoiceRoutes.PREVIEW_INVOICE({ invoice_id: invoiceId }));
+        return;
+      }
+      toast.error(error?.response?.data?.message ?? "An unknown error occurred.");
     },
   });
 };
@@ -566,9 +565,9 @@ export const useDeleteInvoice = (invoiceId: string) => {
     onSuccess: (data: InvoiceResponseType) => {
       // console.log(data);
       toast.success(data.message);
+      queryClient.removeQueries({ queryKey: ["invoice", invoiceId] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
       router.replace(invoiceRoutes.INVOICES);
-
-      queryClient.invalidateQueries({ queryKey: ["invoices", "invoice"] });
     },
     onError: (error) => {
       const errorMessage =

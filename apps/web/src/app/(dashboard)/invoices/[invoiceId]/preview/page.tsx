@@ -18,7 +18,7 @@ import { Button } from "@repo/ui/button";
 import SendInvoiceDialog from "@/features/invoice/components/SendInvoiceDialog";
 import { getDueStatus, invoiceAmounts } from "@/lib/helpers";
 import { ServiceFeeBreakdown } from "@/features/invoice/components/ServiceFeeBreakdown";
-import { InvoiceType } from "@/features/invoice/types";
+import { InvoiceType, isInvoiceDeletable, isInvoiceEditable } from "@/features/invoice/types";
 import { FiEdit } from "react-icons/fi";
 import { AiOutlineDelete } from "react-icons/ai";
 import { invoiceRoutes } from "@/lib/routes";
@@ -116,8 +116,7 @@ export default function Page() {
               <h3 className="">{invoice?.invoice_number}</h3>
 
               <div className="flex font-medium gap-2.5">
-                {(invoice?.status === "draft" ||
-                  invoice?.status === "sent") && (
+                {isInvoiceEditable(invoice) && (
                   <div
                     className="flex items-center gap-1 text-primary-500 cursor-pointer"
                     onClick={gotoEditInvoice}
@@ -130,8 +129,7 @@ export default function Page() {
                   </div>
                 )}
 
-                {(invoice?.status === "sent" ||
-                  invoice?.status === "draft") && (
+                {isInvoiceDeletable(invoice) && (
                   <div
                     onClick={() => setOpenDeleteDialog(true)}
                     className="flex items-center cursor-pointer gap-1 text-error-400"

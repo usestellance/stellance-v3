@@ -92,6 +92,7 @@ export default function CreateInvoiceFormDesktop({
     // console.log("Form values:", values);
     if (watchedItems.length === 0) {
       toast.error("Please add at least one invoice item");
+      return;
     }
 
     const stored = localStorage.getItem("invoice-template");
@@ -116,13 +117,12 @@ export default function CreateInvoiceFormDesktop({
       note: values.notes,
     };
 
+    // Items are cleared only once the API has the invoice, so a failed save keeps what was typed.
     if (isEdit) {
-      updateInvoice.mutate(payload);
-      // console.log('edit mode')
+      updateInvoice.mutate(payload, { onSuccess: clearItems });
     } else {
-      createInvoice.mutate(payload);
+      createInvoice.mutate(payload, { onSuccess: clearItems });
     }
-    clearItems();
   }
 
   const watchedItems = useWatch({
@@ -171,9 +171,10 @@ export default function CreateInvoiceFormDesktop({
   }, [isEdit, invoice, form]);
 
   return (
-    <div className="max-w-[1200px] mx-auto">
+    <div className="max-w-300 mx-auto">
       <Form {...form}>
         <form
+          noValidate
           onSubmit={form.handleSubmit(onSubmit, (e) => {
             console.log("FORM ERRORS:", e);
             if (watchedItems.length === 0) {
@@ -512,21 +513,21 @@ export default function CreateInvoiceFormDesktop({
                   amount: 0,
                 })
               }
-              className="bg-primary-50 text-black-500 hover:text-white font-medium text-lg w-[207px] h-[62px]"
+              className="bg-primary-50 text-black-500 hover:text-white font-medium text-lg w-51.75 h-15.5"
             >
               Add New Item
             </Button>
           </div>
 
-          <hr className="border-neutral-600 mt-[60px]" />
+          <hr className="border-neutral-600 mt-15" />
 
           {/* TOTAL: what the client sees and pays */}
           <div className="custom-container">
             <div className="place-self-end w-1/2 my-10 border rounded-[10px] overflow-hidden border-primary-500 text-xl flex justify-between items-center">
-              <span className="bg-primary-500 px-[38px] py-[15px] font-bold text-neutral-500">
+              <span className="bg-primary-500 px-9.5 py-3.75 font-bold text-neutral-500">
                 Total
               </span>
-              <span className="font-bold px-[15px] py-[11px] line-clamp-1">
+              <span className="font-bold px-3.75 py-2.75 line-clamp-1">
                 {clientTotal}
               </span>
             </div>
@@ -571,7 +572,7 @@ export default function CreateInvoiceFormDesktop({
 
           <PaymentRequirements total={clientTotal} invoiceId={invoice?.id} />
 
-          <div className="flex max-w-full gap-[30px]  justify-center mt-10 lg:mt-[60px]">
+          <div className="flex max-w-full gap-7.5  justify-center mt-10 lg:mt-15">
             <Button
               onClick={() => router.back()}
               className="in-app-btn"

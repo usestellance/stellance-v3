@@ -140,3 +140,10 @@ export type PaginatedCommentsResponse = {
   limit: number;
   total_pages: number;
 };
+
+/** Only drafts can be edited: the API locks an invoice once it is sent. */
+export const isInvoiceEditable = (invoice?: Pick<InvoiceType, "status">) => invoice?.status === "draft";
+
+/** The API deletes any invoice with no payment on it (paid, detected or invalid payments return 409). */
+export const isInvoiceDeletable = (invoice?: Pick<InvoiceType, "status">) =>
+  ["draft", "sent", "viewed", "cancelled", "expired"].includes(invoice?.status ?? "");

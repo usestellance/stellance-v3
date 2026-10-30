@@ -34,9 +34,10 @@ const DeleteInvoiceModal = ({
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const handleDelete = () => {
+    if (pending) return;
     onDelete();
   };
-  const handleCancel = () => {};
+  const handleCancel = () => onOpenChange(false);
 
   if (isDesktop) {
     return (
@@ -52,9 +53,9 @@ const DeleteInvoiceModal = ({
 
           <DialogFooter>
             <Button
-              type="submit"
-              // onClick={() => handleSubmit(true)}
+              type="button"
               onClick={handleCancel}
+              disabled={pending}
               variant="outline"
               className="w-full max-w-60 mx-auto mt-5"
             >
@@ -63,6 +64,7 @@ const DeleteInvoiceModal = ({
             <Button
               type="button"
               onClick={handleDelete}
+              isLoading={pending}
               className="w-full max-w-60 mx-auto mt-5"
               variant="destructive"
             >
@@ -90,6 +92,7 @@ const DeleteInvoiceModal = ({
             <Button
               type="button"
               onClick={handleCancel}
+              disabled={pending}
               variant="outline"
               className="in-app-btn"
             >

@@ -133,7 +133,8 @@ async function edit(id: string, body: Record<string, unknown>, user: MockUser) {
 	const logo = await logoUrl(body.logo);
 	return update((db) => {
 		const invoice = ownInvoice(db, id, user);
-		if (invoice.status !== "draft" && invoice.status !== "sent") throw new HttpError(409, "only draft or sent invoices can be edited");
+		// Like the live API: anything past draft is locked and reported as not found.
+		if (invoice.status !== "draft") throw new HttpError(404, "Invoice not found");
 		if (body.invoice_items !== undefined) {
 			invoice.items = parseItems(body.invoice_items);
 			Object.assign(invoice, totals(invoice.items, Number(body.service_fee) || 0));
