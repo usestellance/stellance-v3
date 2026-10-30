@@ -145,7 +145,11 @@ export default function Page() {
             </section>
             {invoice && <InvoicePaymentSummary invoice={invoice} />}
             {invoice && (
-              <ServiceFeeBreakdown breakdown={invoiceAmounts(invoice)} className="mt-4" />
+              <ServiceFeeBreakdown
+                breakdown={invoiceAmounts(invoice)}
+                canRecreate={isInvoiceDeletable(invoice)}
+                className="mt-4"
+              />
             )}
           </>
         )}

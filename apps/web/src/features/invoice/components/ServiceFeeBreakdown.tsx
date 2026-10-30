@@ -3,10 +3,21 @@ import { formatCurrency, type InvoiceBreakdown } from "@/lib/helpers";
 import { cn } from "@repo/ui/lib/utils";
 
 /** Merchant-only: what the client pays, the Stellance fee, and what the merchant keeps. Never render it on client pages. */
-export function ServiceFeeBreakdown({ breakdown, className }: { breakdown: InvoiceBreakdown; className?: string }) {
+export function ServiceFeeBreakdown({
+	breakdown,
+	canRecreate = false,
+	className,
+}: {
+	breakdown: InvoiceBreakdown;
+	/** The invoice can still be deleted and sent again (it has no payment yet). */
+	canRecreate?: boolean;
+	className?: string;
+}) {
+	// Invoices made before the fee moved to the merchant had it added to the client's total by the API.
+	const legacyFee = breakdown.clientPays > breakdown.subtotal;
 	const rows = [
 		{ label: "Sub total", value: formatCurrency(breakdown.subtotal) },
-		...(breakdown.clientPays !== breakdown.subtotal
+		...(legacyFee
 			? [{ label: "Added to the client's total", value: formatCurrency(breakdown.clientPays - breakdown.subtotal) }]
 			: []),
 		{ label: "Client pays", value: formatCurrency(breakdown.clientPays), strong: true },
@@ -27,9 +38,17 @@ export function ServiceFeeBreakdown({ breakdown, className }: { breakdown: Invoi
 				<span>You receive</span>
 				<span className="tabular-nums">{formatCurrency(breakdown.merchantReceives)}</span>
 			</div>
-			<p className="mt-2 text-xs text-neutral-900 sm:text-sm">
-				Your client only sees the total. The service fee comes out of what you receive.
-			</p>
+			{legacyFee ? (
+				<p className="mt-2 text-xs text-warning-700 sm:text-sm">
+					This invoice was created under the old fee, so your client is asked for{" "}
+					{formatCurrency(breakdown.clientPays - breakdown.subtotal)} more and sees it as a service fee.
+					{canRecreate && " To remove it, delete this invoice and send a new one."}
+				</p>
+			) : (
+				<p className="mt-2 text-xs text-neutral-900 sm:text-sm">
+					Your client only sees the total. The service fee comes out of what you receive.
+				</p>
+			)}
 		</div>
 	);
 }
