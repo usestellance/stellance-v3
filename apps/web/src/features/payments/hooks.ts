@@ -22,7 +22,8 @@ function useRefreshOnSettle(state: InvoicePaymentState | undefined) {
 	useEffect(() => {
 		const status = state?.status;
 		if (previous.current && status && previous.current !== status) {
-			for (const key of ["invoice", "client_invoice", "invoices", "payment", "payments", "notifications", "transactions"]) {
+			// "user" carries the wallet balance.
+			for (const key of ["invoice", "client_invoice", "invoices", "payment", "payments", "notifications", "transactions", "user"]) {
 				queryClient.invalidateQueries({ queryKey: [key] });
 			}
 		}

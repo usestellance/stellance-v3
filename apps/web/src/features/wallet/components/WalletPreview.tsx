@@ -1,6 +1,7 @@
 "use client";
 // import React from "react";
 import { useAuthStore } from "@/features/auth/store";
+import { useGetUser } from "@/features/auth/hooks";
 // import { useGetWallet } from "@/features/wallet/hooks";
 import { IWallet } from "@/features/wallet/types";
 import { useToast } from "@/lib/use-toast";
@@ -18,7 +19,8 @@ import TransferFundsDialog from "@/features/wallet/components/transfer/TransferF
 const WalletPreview = () => {
 	const toast = useToast();
 	const credentials = useAuthStore((state) => state.credentials);
-	// const { data } = useGetWallet();
+	// Keep the balance current while it is on screen (AuthProvider copies the profile into the store).
+	useGetUser(true, { live: true });
 	const [showTransferFunds, setShowTransferFunds] = useState(false);
 	const [showExportDialog, setShowExportDialog] = useState(false);
 	const { wallet } = useWalletStore();

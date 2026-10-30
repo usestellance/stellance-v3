@@ -103,9 +103,9 @@ export const useCreatePin = () => {
 		},
 
 		onSuccess: () => {
-			// Refresh wallet details if needed
+			// The wallet (address, balance, PIN state) comes with the profile.
 			queryClient.invalidateQueries({
-				queryKey: ["wallet"],
+				queryKey: ["user"],
 			});
 
 			// Refresh transactions if necessary
@@ -188,8 +188,9 @@ export const useTransferFunds = () => {
 		},
 
 		onSuccess: () => {
+			// The balance comes with the profile.
 			queryClient.invalidateQueries({
-				queryKey: ["wallet"],
+				queryKey: ["user"],
 			});
 
 			queryClient.invalidateQueries({

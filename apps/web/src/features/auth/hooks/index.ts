@@ -220,7 +220,11 @@ export const useUpdateProfile = () => {
   return mutation;
 };
 
-export const useGetUser = (enabled = true) => {
+/**
+ * The signed-in profile, which also carries the wallet balance (`wallet.balance`). AuthProvider copies it into the
+ * auth store. Pass `live` where the balance is on screen: it re-reads on arrival and every 15 s.
+ */
+export const useGetUser = (enabled = true, { live = false }: { live?: boolean } = {}) => {
   // const toast = useToast();
   const { get } = useAxiosAuth();
   // const setCredentials = userAuth((state) => state.setCredentials);
@@ -239,10 +243,10 @@ export const useGetUser = (enabled = true) => {
     queryFn: handleGetUser,
     enabled,
     retry: 1,
-    refetchOnMount: true,
+    refetchOnMount: live ? "always" : true,
     refetchOnWindowFocus: true,
     staleTime: 1000 * 60 * 5,
-    refetchInterval: 1000 * 60 * 5,
+    refetchInterval: live ? 15_000 : 1000 * 60 * 5,
   });
 
   //   useEffect(() => {

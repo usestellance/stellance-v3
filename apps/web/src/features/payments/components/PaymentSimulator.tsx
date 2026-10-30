@@ -27,7 +27,7 @@ export function PaymentSimulator({ invoiceId }: { invoiceId: string }) {
 		mutationFn: (scenario: SimulationScenario) => simulatePayment(invoiceId, scenario),
 		onSuccess: () => {
 			toast.info("Payment sent. Watch the status update.");
-			for (const key of ["invoice-payments", "payments", "payment", "notifications"]) queryClient.invalidateQueries({ queryKey: [key] });
+			for (const key of ["invoice-payments", "payments", "payment", "notifications", "user"]) queryClient.invalidateQueries({ queryKey: [key] });
 		},
 		onError: () => toast.error("Couldn't simulate the payment"),
 	});
