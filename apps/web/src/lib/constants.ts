@@ -13,8 +13,8 @@ export const invoiceStatusOptions: { label: string; value: InvoiceStatus }[] = [
   { label: "Cancelled", value: "cancelled" },
 ];
 
-/** Stellance service fee, in percent of the subtotal. The merchant pays it; the client never sees it. */
-export const SERVICE_CHARGE = 1;
+/** Stellance service fee, in percent of the subtotal: none for now. If set, the merchant pays it; the client never sees it. */
+export const SERVICE_CHARGE = 0;
 
 export const months = [
   "january",

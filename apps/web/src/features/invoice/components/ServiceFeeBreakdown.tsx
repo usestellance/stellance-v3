@@ -15,13 +15,18 @@ export function ServiceFeeBreakdown({
 }) {
 	// Invoices made before the fee moved to the merchant had it added to the client's total by the API.
 	const legacyFee = breakdown.clientPays > breakdown.subtotal;
+	// No fee to explain: the invoice total already says it all.
+	if (SERVICE_CHARGE === 0 && !legacyFee) return null;
+
 	const rows = [
 		{ label: "Sub total", value: formatCurrency(breakdown.subtotal) },
 		...(legacyFee
 			? [{ label: "Added to the client's total", value: formatCurrency(breakdown.clientPays - breakdown.subtotal) }]
 			: []),
 		{ label: "Client pays", value: formatCurrency(breakdown.clientPays), strong: true },
-		{ label: `Service fee (${SERVICE_CHARGE}%)`, value: `− ${formatCurrency(breakdown.serviceFee)}`, muted: true },
+		...(SERVICE_CHARGE > 0
+			? [{ label: `Service fee (${SERVICE_CHARGE}%)`, value: `− ${formatCurrency(breakdown.serviceFee)}`, muted: true }]
+			: []),
 	];
 
 	return (
