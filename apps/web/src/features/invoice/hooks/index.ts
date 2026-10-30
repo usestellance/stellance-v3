@@ -356,8 +356,11 @@ export const useGetInvoice = ({ invoice_id }: { invoice_id: string }) => {
 
 export const useGetInvoiceForClient = ({
   invoice_url,
+  pollWhile,
 }: {
   invoice_url: string;
+  /** Re-read every 3 s while this holds, e.g. until a review the payer just sent shows up. */
+  pollWhile?: (invoice: InvoiceType | undefined) => boolean;
 }) => {
   // const { get } = useAxiosAuth();
 
@@ -386,8 +389,13 @@ export const useGetInvoiceForClient = ({
       return count < 2 && !(status >= 400 && status < 500);
     },
     refetchOnWindowFocus: false,
+    refetchInterval: (query) => (pollWhile?.(query.state.data as InvoiceType | undefined) ? 3000 : false),
   });
 };
+
+/** The API refuses a second review; that means the first one landed, not that something failed. */
+export const isAlreadyReviewed = (error: unknown) =>
+  /already\s+(been\s+)?reviewed/i.test((error as ApiErrorLike)?.response?.data?.message ?? "");
 
 export const useSendInvoice = (invoiceId: string) => {
   const toast = useToast();
@@ -490,10 +498,11 @@ export const useSendInvoice = (invoiceId: string) => {
 //   return mutation;
 // };
 
-export const useReviewInvoice = (invoiceId: string, approve: boolean) => {
+/** The decision travels with each call (`mutate(true | false)`), so a click never sends the previous answer. */
+export const useReviewInvoice = (invoiceId: string) => {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const handleSendInvoice = async () => {
+  const handleSendInvoice = async (approve: boolean) => {
     // The API takes the decision in the body (POST since 2026-10-22; the old GET is refused).
     const response = await axiosInstance.post(`/invoice/review/${invoiceId}`, { approve });
     return response.data;
@@ -502,8 +511,9 @@ export const useReviewInvoice = (invoiceId: string, approve: boolean) => {
   const mutation = useMutation<
     InvoiceResponseType,
     AxiosError<InvoiceResponseType>,
-    void
+    boolean
   >({
+    retry: false,
     mutationFn: handleSendInvoice,
     onSuccess: (data: InvoiceResponseType) => {
       toast.success(data.message);
@@ -514,6 +524,10 @@ export const useReviewInvoice = (invoiceId: string, approve: boolean) => {
       });
     },
     onError: (error) => {
+      if (isAlreadyReviewed(error)) {
+        queryClient.invalidateQueries({ queryKey: ["client_invoice"], exact: false });
+        return;
+      }
       const errorMessage =
         axios.isAxiosError(error) && error?.response?.data?.message
           ? error?.response?.data?.message

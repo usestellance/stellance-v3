@@ -3,6 +3,7 @@ import { withBasePath } from "@/lib/site";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
+  isAlreadyReviewed,
   useGetInvoiceForClient,
   useReviewInvoice,
 } from "@/features/invoice/hooks";
@@ -22,32 +23,46 @@ import { IoIosCloseCircleOutline } from "react-icons/io";
 import InvoiceSkeletonLoader from "@/components/InvoiceSkeletonLoader";
 import CommentsPreview from "@/features/invoice/components/comments/CommentsPreview";
 
+/** The payer has answered: the API stamps `review_date`, and a decline cancels the invoice. */
+const isReviewed = (invoice: InvoiceType | undefined) =>
+  !!invoice?.review_date || invoice?.status === "cancelled";
+
 export default function Page() {
   const router = useRouter();
   const { id } = useParams();
   const searchParams = useSearchParams();
   const name = searchParams.get("name");
   const [activeTab, setActiveTab] = useState<"invoice" | "comment">("invoice");
+  // The decision the payer sent, kept until the invoice the API returns shows it.
+  const [sentDecision, setSentDecision] = useState<boolean | null>(null);
   const { data, isLoading, isError } = useGetInvoiceForClient({
     invoice_url: id?.toString() || "",
+    pollWhile: (current) => sentDecision !== null && !isReviewed(current),
   });
-  const [approve, setApprove] = useState<boolean>(true);
   const invoice: InvoiceType = data;
 
   // console.log("invoice", name, data?.payer_email?.split("@")[0] === name);
 
   const isPayer = data?.payer_email?.split("@")[0] === name;
 
-  const { mutate, isPending } = useReviewInvoice(
+  // `variables` is the decision in flight: only the button that was pressed shows the spinner.
+  const { mutate, isPending, variables: reviewing } = useReviewInvoice(
     invoice?.id?.toString() || "",
-    approve,
   );
 
-  const handleReviewInvoice = (status: boolean) => {
-    setApprove(status);
-    mutate();
-    // window.location.reload();
+  const handleReviewInvoice = (approve: boolean) => {
+    if (isPending) return;
+    mutate(approve, {
+      onSuccess: () => setSentDecision(approve),
+      // A second click after a slow update: the first review landed, so wait for it the same way.
+      onError: (error) => {
+        if (isAlreadyReviewed(error)) setSentDecision(approve);
+      },
+    });
   };
+
+  // Sent, but the API still returns the invoice as unreviewed: show that it is on its way.
+  const awaitingReview = sentDecision !== null && !isReviewed(invoice);
 
   const getTemplate = () => {
     switch (invoice?.template_id) {
@@ -181,15 +196,33 @@ export default function Page() {
             {isPayer && (
               <section className="mt-10 sm:mt-16 lg:mt-[60px]">
                 {/* Opening the link marks the invoice viewed, so review stays open until the payer has answered. */}
-                {(invoice?.status === "sent" || invoice?.status === "viewed") && !invoice?.review_date && (
+                {awaitingReview && (
+                  <div
+                    role="status"
+                    className="animate-rise mx-auto flex max-w-[500px] items-start gap-3 rounded-xl border border-primary-50 bg-primary-20 px-4 py-3 sm:px-5"
+                  >
+                    <span className="animate-signal mt-1.5 size-2 shrink-0 rounded-full bg-primary-500" aria-hidden />
+                    <div>
+                      <p className="font-semibold text-primary-500">
+                        {sentDecision ? "Approval sent" : "Decline sent"}
+                      </p>
+                      <p className="text-sm text-neutral-900">
+                        We&apos;re waiting for the invoice to update. This page refreshes on its own.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {!awaitingReview && (invoice?.status === "sent" || invoice?.status === "viewed") && !isReviewed(invoice) && (
                   <div className="flex gap-[30px] justify-center">
                     <Button
+                      type="button"
                       onClick={() => handleReviewInvoice(false)}
                       disabled={isPending}
+                      isLoading={isPending && reviewing === false}
                       variant="outline"
                       className="in-app-btn"
                     >
-                      Declined
+                      Decline
                     </Button>
 
                     <Button
@@ -197,6 +230,7 @@ export default function Page() {
                       className="in-app-btn"
                       onClick={() => handleReviewInvoice(true)}
                       disabled={isPending}
+                      isLoading={isPending && reviewing === true}
                     >
                       Approve
                     </Button>
