@@ -116,35 +116,55 @@ export const useCreatePin = () => {
 	});
 };
 
+interface WalletExportResponse {
+	message: string;
+	data: { private_key: string; wallet_address: string };
+}
+
+/** The API returns the keys as JSON; the PDF is drawn here, in memory, and never stored or logged. */
 export const useExportWalletKeys = () => {
 	const { get } = useAxiosAuth();
 
 	const walletId = useAuthStore((state) => state.credentials?.user?.wallet?.id);
 
 	return useMutation({
+		retry: false,
 		mutationFn: async () => {
-			const response = await get(`/wallet/export/${walletId}`, {
-				responseType: "blob",
-			});
+			const response = await get<WalletExportResponse>(`/wallet/export/${walletId}`);
+			const { private_key, wallet_address } = response.data.data ?? {};
+			if (!private_key || !wallet_address) throw new Error("The wallet keys could not be read.");
 
-			const blob = new Blob([response.data], {
-				type: "application/pdf",
-			});
+			const { default: jsPDF } = await import("jspdf");
+			const doc = new jsPDF();
+			const width = doc.internal.pageSize.getWidth() - 28;
 
-			const url = window.URL.createObjectURL(blob);
+			doc.setFontSize(18);
+			doc.text("Stellance wallet keys", 14, 22);
+			doc.setFontSize(10);
+			doc.setTextColor(110);
+			doc.text(`Exported on ${new Date().toLocaleString()} · Stellar Testnet`, 14, 30);
 
-			const link = document.createElement("a");
+			doc.setTextColor(20);
+			doc.setFontSize(11);
+			doc.text("Public address", 14, 46);
+			doc.setFont("courier", "normal");
+			doc.text(doc.splitTextToSize(wallet_address, width), 14, 53);
 
-			link.href = url;
-			link.download = "wallet-keys.pdf";
+			doc.setFont("helvetica", "normal");
+			doc.text("Secret key", 14, 70);
+			doc.setFont("courier", "bold");
+			doc.text(doc.splitTextToSize(private_key, width), 14, 77);
 
-			document.body.appendChild(link);
+			doc.setFont("helvetica", "normal");
+			doc.setFontSize(10);
+			doc.setTextColor(150, 30, 30);
+			doc.text(
+				doc.splitTextToSize("Keep this file secure and never share it. Anyone with the secret key can move the funds in this wallet.", width),
+				14,
+				94,
+			);
 
-			link.click();
-
-			link.remove();
-
-			window.URL.revokeObjectURL(url);
+			doc.save("stellance-wallet-keys.pdf");
 		},
 	});
 };

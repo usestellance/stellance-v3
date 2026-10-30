@@ -79,28 +79,51 @@ export function formatWalletCurrency(
 }
 
 
-// Calculates subtotal (sum of all item amounts after individual discounts)
-export function calculateTotal(items: InvoiceItemsTypes[]): number {
-  return items.reduce((total, item) => {
-    const itemTotal =
-      item.quantity * item.unit_price * ((100 - item.discount) / 100);
-    return total + itemTotal;
-  }, 0);
+const toCents = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+type LineInput = Pick<InvoiceItemsTypes, "quantity" | "unit_price" | "discount">;
+
+/** One line: quantity × unit price, less its own discount (%), to the cent. */
+export function calculateLineAmount(item: LineInput): number {
+  const quantity = Number(item.quantity) || 0;
+  const unitPrice = Number(item.unit_price) || 0;
+  const discount = Math.min(Math.max(Number(item.discount) || 0, 0), 100);
+  return toCents(quantity * unitPrice * ((100 - discount) / 100));
 }
 
-export function calculateServiceFee(
-  subtotal: number
-    // feePercentage: number
-): number {
-  return (subtotal * SERVICE_CHARGE) / 100;
+/** Subtotal: the sum of the line amounts. */
+export function calculateTotal(items: LineInput[]): number {
+  return toCents(items.reduce((total, item) => total + calculateLineAmount(item), 0));
 }
 
-export function calculateNetTotal(
-  subtotal: number,
-  serviceFee: number
-): number {
-  return subtotal - serviceFee;
-  // return subtotal;
+export function calculateServiceFee(subtotal: number): number {
+  return toCents((subtotal * SERVICE_CHARGE) / 100);
+}
+
+export interface InvoiceBreakdown {
+  subtotal: number;
+  /** What the client is asked to pay. */
+  clientPays: number;
+  /** The Stellance fee, paid by the merchant. */
+  serviceFee: number;
+  /** What the merchant keeps after the fee. */
+  merchantReceives: number;
+}
+
+/**
+ * The money on an invoice. The client pays the subtotal; the merchant pays the service fee out of it.
+ * Pass the API's `total` once the invoice exists: that is the amount the payment request asks for.
+ */
+export function invoiceBreakdown(subtotal: number, apiTotal?: number): InvoiceBreakdown {
+  const clientPays = toCents(apiTotal ?? subtotal);
+  const serviceFee = calculateServiceFee(subtotal);
+  return { subtotal: toCents(subtotal), clientPays, serviceFee, merchantReceives: toCents(clientPays - serviceFee) };
+}
+
+/** Subtotal and amount due for an invoice from the API (older invoices may lack `sub_total`). */
+export function invoiceAmounts(invoice: { items?: LineInput[]; sub_total?: number; total?: number } | undefined) {
+  const subtotal = invoice?.sub_total ?? calculateTotal(invoice?.items ?? []);
+  return invoiceBreakdown(subtotal, invoice?.total);
 }
 
 export function numberToWordsUSD(amount: number): string {

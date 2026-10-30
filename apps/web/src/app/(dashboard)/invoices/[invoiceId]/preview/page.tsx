@@ -16,7 +16,8 @@ import {
 } from "@/features/invoice/hooks";
 import { Button } from "@repo/ui/button";
 import SendInvoiceDialog from "@/features/invoice/components/SendInvoiceDialog";
-import { getDueStatus } from "@/lib/helpers";
+import { getDueStatus, invoiceAmounts } from "@/lib/helpers";
+import { ServiceFeeBreakdown } from "@/features/invoice/components/ServiceFeeBreakdown";
 import { InvoiceType } from "@/features/invoice/types";
 import { FiEdit } from "react-icons/fi";
 import { AiOutlineDelete } from "react-icons/ai";
@@ -145,6 +146,9 @@ export default function Page() {
               </div>
             </section>
             {invoice && <InvoicePaymentSummary invoice={invoice} />}
+            {invoice && (
+              <ServiceFeeBreakdown breakdown={invoiceAmounts(invoice)} className="mt-4" />
+            )}
           </>
         )}
 

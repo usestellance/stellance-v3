@@ -139,7 +139,8 @@ export function buildSeed(version: number): MockDb {
 			};
 		});
 		const sub_total = round2(items.reduce((s, i) => s + i.amount, 0));
-		const service_fee = round2(sub_total * 0.025);
+		// The merchant carries the Stellance fee, so nothing is added to what the client pays.
+		const service_fee = 0;
 		const total = round2(sub_total + service_fee);
 		const [client, email, country] = CLIENTS[clientIndex % CLIENTS.length]!;
 		const due = created + dueInDays * DAY;

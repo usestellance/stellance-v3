@@ -177,7 +177,7 @@ export interface MockDb {
 }
 
 const KEY = "stellance-mock-db";
-const VERSION = 5;
+const VERSION = 6;
 
 let memory: MockDb | null = null;
 

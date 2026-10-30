@@ -43,9 +43,10 @@ async function logoUrl(file: unknown): Promise<string | null | undefined> {
 	});
 }
 
-function totals(items: MockInvoiceItem[], feePercent = 2.5) {
+/** Like the live API: `service_fee` is an amount added to what the client pays (the web app sends 0). */
+function totals(items: MockInvoiceItem[], fee = 0) {
 	const sub_total = round2(items.reduce((s, i) => s + i.amount, 0));
-	const service_fee = round2((sub_total * feePercent) / 100);
+	const service_fee = round2(Math.max(fee, 0));
 	return { sub_total, service_fee, total: round2(sub_total + service_fee) };
 }
 
@@ -91,7 +92,7 @@ route("POST", "/invoice", "user", async ({ body, user }) => {
 	const created = update((db) => {
 		const now = Date.now();
 		const number = nextNumber(db);
-		const amounts = totals(items, Number(body.service_fee) || 2.5);
+		const amounts = totals(items, Number(body.service_fee) || 0);
 		const due = Date.parse(String(body.due_date)) || now + 14 * DAY;
 		const invoice: MockInvoice = {
 			id: uuid(),
@@ -135,7 +136,7 @@ async function edit(id: string, body: Record<string, unknown>, user: MockUser) {
 		if (invoice.status !== "draft" && invoice.status !== "sent") throw new HttpError(409, "only draft or sent invoices can be edited");
 		if (body.invoice_items !== undefined) {
 			invoice.items = parseItems(body.invoice_items);
-			Object.assign(invoice, totals(invoice.items, Number(body.service_fee) || 2.5));
+			Object.assign(invoice, totals(invoice.items, Number(body.service_fee) || 0));
 			invoice.payment_amount = invoice.total;
 		}
 		for (const key of ["title", "payer_name", "payer_email", "country", "note", "template_id"] as const) {

@@ -12,11 +12,12 @@ import {
 } from "@/features/invoice/schema";
 import { SERVICE_CHARGE } from "@/lib/constants";
 import {
-  calculateNetTotal,
   calculateTotal,
   formatCurrency,
   formatDateForInput,
+  invoiceBreakdown,
 } from "@/lib/helpers";
+import { ServiceFeeBreakdown } from "@/features/invoice/components/ServiceFeeBreakdown";
 import {
   Form,
   FormControl,
@@ -61,12 +62,11 @@ export default function CreateInvoiceFormMobile({
   const createInvoice = useCreateInvoice();
   const updateInvoice = useUpdateInvoice({ invoiceId: invoice?.id || "" });
 
-  const total = calculateTotal(items);
-  const serviceFee = (total * SERVICE_CHARGE) / 100;
+  const breakdown = invoiceBreakdown(calculateTotal(items));
   const [make_default, setMake_default] = useState(true);
   // The logo preview lives here, not inside the field's render callback (hooks can't run in callbacks).
   const [preview, setPreview] = useState<string | null>(null);
-  const netTotal = formatCurrency(calculateNetTotal(total, serviceFee));
+  const clientTotal = formatCurrency(breakdown.clientPays);
 
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
@@ -147,7 +147,8 @@ export default function CreateInvoiceFormMobile({
       country: values.address,
       due_date: values.dueDate,
       invoice_items: items, // ✅ Zustand owns this
-      service_fee: serviceFee,
+      // The API adds service_fee to what the client pays; the merchant carries the fee, so nothing is added.
+      service_fee: 0,
       template_id,
       logo: values.logo,
       make_default,
@@ -402,46 +403,19 @@ export default function CreateInvoiceFormMobile({
 
           <hr className="border-neutral-600" />
 
-          {/* SUBTOTAL */}
-          <div className="custom-container text-sm flex justify-between">
-            <span>Sub Total</span>
-            <span className="font-bold">{formatCurrency(total)}</span>
-          </div>
-
-          <hr className="border-neutral-600" />
-
-          {/* DISCOUNT */}
-          <div className="custom-container text-sm flex justify-between items-center">
-            <div className="flex gap-2 items-center ">
-              <span className="inline-block">Charge (%)</span>
-              <FormField
-                control={form.control}
-                name="charge"
-                render={({ field }) => (
-                  <InputField
-                    {...field}
-                    value={field.value ?? SERVICE_CHARGE}
-                    type="number"
-                    className="w-12 h-[31px] text-xs text-center"
-                    readonly
-                    disabled
-                  />
-                )}
-              />
-            </div>
-            <span className="font-bold">{formatCurrency(serviceFee)}</span>
-          </div>
-
-          {/* TOTAL */}
+          {/* TOTAL: what the client sees and pays */}
           <div className="custom-container">
             <div className="my-10 border rounded-[5px] border-primary-500 text-sm flex justify-between items-center">
               <span className="bg-primary-500 px-[18px] py-[11px] font-bold text-neutral-500">
                 Total
               </span>
               <span className="font-bold px-[15px] py-[11px] line-clamp-1">
-                {netTotal}
+                {clientTotal}
               </span>
             </div>
+
+            {/* Merchant only: the fee and what is left after it */}
+            <ServiceFeeBreakdown breakdown={breakdown} />
           </div>
 
           {/* DUE DATE + NOTES */}
@@ -478,7 +452,7 @@ export default function CreateInvoiceFormMobile({
             />
           </div>
 
-          <PaymentRequirements total={netTotal} invoiceId={invoice?.id} />
+          <PaymentRequirements total={clientTotal} invoiceId={invoice?.id} />
 
           <div className="flex max-w-full gap-[30px]  justify-center mt-10 lg:mt-[60px]">
             <Button

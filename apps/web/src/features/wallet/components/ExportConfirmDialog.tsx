@@ -18,14 +18,9 @@ const ExportKeysDialog = ({ open, onOpenChange }: Props) => {
 			await exportKeys.mutateAsync();
 
 			toast.success("Wallet keys exported successfully.");
-			if (exportKeys.isSuccess) {
-				onOpenChange(false);
-			}
 		} catch (caught) {
-			const error = caught as ApiErrorLike;
-			toast.error(
-				error?.response?.data?.message ?? "Failed to export wallet keys.",
-			);
+			const error = caught as ApiErrorLike & { message?: string };
+			toast.error(error?.response?.data?.message ?? error?.message ?? "Failed to export wallet keys.");
 		} finally {
 			onOpenChange(false);
 		}

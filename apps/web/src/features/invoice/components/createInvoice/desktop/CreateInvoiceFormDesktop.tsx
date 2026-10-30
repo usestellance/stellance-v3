@@ -11,11 +11,13 @@ import {
 } from "@/features/invoice/schema";
 import { SERVICE_CHARGE } from "@/lib/constants";
 import {
-  calculateNetTotal,
+  calculateLineAmount,
   calculateTotal,
   formatCurrency,
   formatDateForInput,
+  invoiceBreakdown,
 } from "@/lib/helpers";
+import { ServiceFeeBreakdown } from "@/features/invoice/components/ServiceFeeBreakdown";
 import {
   Form,
   FormControl,
@@ -106,7 +108,8 @@ export default function CreateInvoiceFormDesktop({
       country: values.address,
       due_date: values.dueDate,
       invoice_items: values.items,
-      service_fee: serviceFee,
+      // The API adds service_fee to what the client pays; the merchant carries the fee, so nothing is added.
+      service_fee: 0,
       template_id,
       logo: values.logo,
       make_default,
@@ -129,10 +132,7 @@ export default function CreateInvoiceFormDesktop({
 
   useEffect(() => {
     watchedItems?.forEach((item, index) => {
-      const amount =
-        (item.quantity ?? 0) *
-        (item.unit_price ?? 0) *
-        ((100 - (item.discount ?? 0)) / 100);
+      const amount = calculateLineAmount(item);
 
       if (amount !== item.amount) {
         form.setValue(`items.${index}.amount`, amount, {
@@ -144,11 +144,9 @@ export default function CreateInvoiceFormDesktop({
     });
   }, [watchedItems, form]);
 
-  const total = calculateTotal(watchedItems ?? []);
+  const breakdown = invoiceBreakdown(calculateTotal(watchedItems ?? []));
 
-  const serviceFee = (total * SERVICE_CHARGE) / 100;
-
-  const netTotal = formatCurrency(calculateNetTotal(total, serviceFee));
+  const clientTotal = formatCurrency(breakdown.clientPays);
 
   const clearItems = () => {
     form.setValue("items", []);
@@ -522,46 +520,19 @@ export default function CreateInvoiceFormDesktop({
 
           <hr className="border-neutral-600 mt-[60px]" />
 
-          {/* SUBTOTAL */}
-          <div className="place-self-end px-4 sm:px-[30px] md:px-10 py-5 text-xl flex justify-between w-1/2">
-            <span>Sub Total</span>
-            <span className="font-bold">{formatCurrency(total)}</span>
-          </div>
-
-          <hr className="border-neutral-600 w-1/2 place-self-end" />
-
-          {/* DISCOUNT */}
-          <div className="place-self-end px-4 sm:px-[30px] md:px-10 text-xl py-5 flex justify-between items-center gap-10 lg:w-1/2">
-            <div className="flex gap-2 items-center">
-              <span className="inline-block">Charge (%)</span>
-              <FormField
-                control={form.control}
-                name="charge"
-                render={({ field }) => (
-                  <InputField
-                    {...field}
-                    value={field.value ?? SERVICE_CHARGE}
-                    type="number"
-                    className="w-24 h-[31px] text-xl text-center"
-                    readonly
-                    disabled
-                  />
-                )}
-              />
-            </div>
-            <span className="font-bold">{formatCurrency(serviceFee)}</span>
-          </div>
-
-          {/* TOTAL */}
+          {/* TOTAL: what the client sees and pays */}
           <div className="custom-container">
             <div className="place-self-end w-1/2 my-10 border rounded-[10px] overflow-hidden border-primary-500 text-xl flex justify-between items-center">
               <span className="bg-primary-500 px-[38px] py-[15px] font-bold text-neutral-500">
                 Total
               </span>
               <span className="font-bold px-[15px] py-[11px] line-clamp-1">
-                {netTotal}
+                {clientTotal}
               </span>
             </div>
+
+            {/* Merchant only: the fee and what is left after it */}
+            <ServiceFeeBreakdown breakdown={breakdown} className="place-self-end lg:w-1/2" />
           </div>
 
           {/* DUE DATE + NOTES */}
@@ -598,7 +569,7 @@ export default function CreateInvoiceFormDesktop({
             />
           </div>
 
-          <PaymentRequirements total={netTotal} invoiceId={invoice?.id} />
+          <PaymentRequirements total={clientTotal} invoiceId={invoice?.id} />
 
           <div className="flex max-w-full gap-[30px]  justify-center mt-10 lg:mt-[60px]">
             <Button

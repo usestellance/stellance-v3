@@ -1,5 +1,5 @@
 import { read, update, type MockTransaction } from "../db";
-import { HttpError, RawBody, ok, route } from "../router";
+import { HttpError, ok, route } from "../router";
 import { hex, iso, round2, stellarAddress, uuid } from "../util";
 import { num, primaryWallet, walletDto } from "./present";
 
@@ -114,13 +114,10 @@ route("POST", "/wallet/:id/pay/transfer", "user", ({ params, body, user }) => {
 	);
 });
 
-/** A one-page PDF placeholder: the mock never holds real keys. */
+/** The live shape: the keys as JSON (the app draws the PDF). The mock never holds real keys. */
 route("GET", "/wallet/export/:id", "user", ({ params, user }) => {
 	const wallet = myWallet(params.id!, user!.id);
-	const text = `Stellance demo wallet ${wallet.address} - mock data, no real keys`;
-	const stream = `BT /F1 10 Tf 40 780 Td (${text}) Tj ET`;
-	const pdf = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 842]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj\n4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\n5 0 obj<</Length ${stream.length}>>stream\n${stream}\nendstream endobj\ntrailer<</Root 1 0 R>>\n%%EOF`;
-	return new RawBody(new Blob([pdf], { type: "application/pdf" }));
+	return ok({ wallet_address: wallet.address, private_key: "SDEMO-MOCK-DATA-NOT-A-REAL-SECRET-KEY" }, "wallet exported");
 });
 
 // ---- Ledger ------------------------------------------------------------------------------

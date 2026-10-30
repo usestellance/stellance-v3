@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useInvoiceItems } from "@/features/invoice/store";
+import { calculateLineAmount } from "@/lib/helpers";
 import {
   Drawer,
   DrawerContent,
@@ -71,9 +72,7 @@ export default function AddInvoiceItemDrawer({
   }, [quantity, unit_price, discount, form]);
 
   const onSubmit = (values: ItemValues) => {
-    const amount =
-      values.unit_price * values.quantity -
-      (values.unit_price * values.quantity * values.discount) / 100;
+    const amount = calculateLineAmount(values);
 
     const payload = { ...values, amount };
 

@@ -5,9 +5,9 @@ import {
   capitalizeWords,
   formatCurrency,
   formatDate,
+  invoiceAmounts,
   numberToWordsUSD,
 } from "@/lib/helpers";
-import { SERVICE_CHARGE } from "@/lib/constants";
 import { InvoiceType } from "@/features/invoice/types";
 import { overviewRoutes } from "@/lib/routes";
 
@@ -119,22 +119,10 @@ export default Template05;
 
 function InvoiceItems({ inv }: { inv: InvoiceType }) {
   // function InvoiceItems() {
-  const subTotal = inv?.items?.reduce((acc, item) => {
-    const unitPrice = Number(item.unit_price) || 0;
-    const quantity = Number(item.quantity) || 0;
-    const discount = Number(item.discount) || 0;
-
-    const amountBeforeDiscount = unitPrice * quantity;
-    const discountAmount = (discount / 100) * amountBeforeDiscount;
-
-    return acc + (amountBeforeDiscount - discountAmount);
-  }, 0);
-
-  // 2. Calculate service fee
-  const serviceFee = (SERVICE_CHARGE / 100) * (subTotal || 0);
-
-  // 3. Calculate total
-  const total = (subTotal || 0) - serviceFee;
+  // The API's amounts: the client pays `total`. The Stellance fee is the merchant's and never shows here.
+  const { subtotal: subTotal, clientPays: total } = invoiceAmounts(inv);
+  // Invoices made before the fee moved to the merchant had it added to the client's total.
+  const addedFee = Math.max(total - subTotal, 0);
 
   return (
     <div className="">
@@ -222,15 +210,14 @@ function InvoiceItems({ inv }: { inv: InvoiceType }) {
         </div>
       </div>
 
-      <div className="flex justify-end py-[18px] custom-container">
-        <div className="flex items-center gap-[81px] justify-end">
-          <p className="text-xs font-bold text-text-strong lg:text-lg">{`SERVICE FEE (${SERVICE_CHARGE}) %`}</p>
-          <p className="text-xs font-bold text-text-strong lg:text-lg">
-            {/* {formatCurrency(inv?.service_fee || 0)} */}
-            {formatCurrency(serviceFee)}
-          </p>
+      {addedFee > 0 && (
+        <div className="flex justify-end py-[18px] custom-container">
+          <div className="flex items-center gap-[81px] justify-end">
+            <p className="text-xs font-bold text-text-strong lg:text-lg">SERVICE FEE</p>
+            <p className="text-xs font-bold text-text-strong lg:text-lg">{formatCurrency(addedFee)}</p>
+          </div>
         </div>
-      </div>
+      )}
       <div className="custom-container w-full flex flex-col items-end justify-end md:pt-4">
         <div className="w-full max-w-[273px] lg:max-w-8/12 flex justifybetween h-[43px] overflow-hidden items-center">
           <h5 className="text-sm font-bold leading-[25px] py-3 px-4 w-20 md:text-lg">

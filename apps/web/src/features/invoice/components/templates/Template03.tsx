@@ -6,9 +6,10 @@ import {
   capitalizeWords,
   formatCurrency,
   formatDate,
+  calculateLineAmount,
+  invoiceAmounts,
   numberToWordsUSD,
 } from "@/lib/helpers";
-import { SERVICE_CHARGE } from "@/lib/constants";
 import { InvoiceType } from "@/features/invoice/types";
 import { overviewRoutes } from "@/lib/routes";
 
@@ -110,22 +111,10 @@ const Template03 = ({ invoice }: { invoice: InvoiceType }) => {
 export default Template03;
 
 function InvoiceItems({ inv }: { inv: InvoiceType }) {
-  const subTotal = inv?.items?.reduce((acc, item) => {
-    const unitPrice = Number(item.unit_price) || 0;
-    const quantity = Number(item.quantity) || 0;
-    const discount = Number(item.discount) || 0;
-
-    const amountBeforeDiscount = unitPrice * quantity;
-    const discountAmount = (discount / 100) * amountBeforeDiscount;
-
-    return acc + (amountBeforeDiscount - discountAmount);
-  }, 0);
-
-  // 2. Calculate service fee
-  const serviceFee = (SERVICE_CHARGE / 100) * (subTotal || 0);
-
-  // 3. Calculate total
-  const total = (subTotal || 0) - serviceFee;
+  // The API's amounts: the client pays `total`. The Stellance fee is the merchant's and never shows here.
+  const { subtotal: subTotal, clientPays: total } = invoiceAmounts(inv);
+  // Invoices made before the fee moved to the merchant had it added to the client's total.
+  const addedFee = Math.max(total - subTotal, 0);
 
   return (
     <div className="bg-[#D9E4F8] rounded-[5px] pb-12 lg:pb-[83px]">
@@ -193,19 +182,7 @@ function InvoiceItems({ inv }: { inv: InvoiceType }) {
                   {inv.discount || 0}
                 </td>
                 <td className="px-4 py-[15px] text-xs lg:text-base text-center">
-                  {formatCurrency(
-                    (() => {
-                      const unitPrice = Number(inv.unit_price) || 0;
-                      const quantity = Number(inv.quantity) || 0;
-                      const discount = Number(inv.discount) || 0;
-
-                      const amountBeforeDiscount = unitPrice * quantity;
-                      const discountAmount =
-                        (discount / 100) * amountBeforeDiscount;
-
-                      return amountBeforeDiscount - discountAmount;
-                    })(),
-                  )}
+                  {formatCurrency(calculateLineAmount(inv))}
                 </td>
               </tr>
             ))}
@@ -227,15 +204,14 @@ function InvoiceItems({ inv }: { inv: InvoiceType }) {
       {/* <div className="flex justify-end">
         <hr className="text-[#BFBFBF99] w-[230px] lg:w-[558px]" />
       </div> */}
-      <div className="flex justify-end py-[18px] custom-container">
-        <div className="flex items-center gap-[81px] justify-end">
-          <p className="text-xs font-bold text-text-strong lg:text-lg">{`Service Fee (${SERVICE_CHARGE}) %`}</p>
-          <p className="text-xs font-bold text-text-strong lg:text-lg">
-            {/* {formatCurrency(inv?.service_fee || 0)} */}
-            {formatCurrency(serviceFee)}
-          </p>
+      {addedFee > 0 && (
+        <div className="flex justify-end py-[18px] custom-container">
+          <div className="flex items-center gap-[81px] justify-end">
+            <p className="text-xs font-bold text-text-strong lg:text-lg">Service Fee</p>
+            <p className="text-xs font-bold text-text-strong lg:text-lg">{formatCurrency(addedFee)}</p>
+          </div>
         </div>
-      </div>
+      )}
       <div className="custom-container mt-2 w-full flex flex-col items-end justify-end">
         <div className="w-full max-w-[273px] lg:max-w-[558px] flex justifybetween h-[43px] overflow-hidden items-center rounded-[6px] ">
           <h5 className="text-sm font-bold leading-[25px] py-3 px-4 w-20 md:text-lg">
